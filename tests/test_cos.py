@@ -206,6 +206,28 @@ class CosTest(unittest.TestCase):
         self.assertIn("COOs 50000", out)  # floor
         self.assertIn("Chief of Staff 150000", out)
 
+    def test_overlay_none_by_default(self):
+        self.assertIn("overlay: none", self.run_cos("status").stdout)
+
+    def test_overlay_listed_from_config(self):
+        ov = self.p("my-overlay")
+        os.makedirs(ov)
+        for name in ("project-coo.md", "chief-of-staff.md", "notes.txt"):
+            open(os.path.join(ov, name), "w").close()
+        with open(self.cfg, "a") as f:
+            f.write("overlay_dir: %s\n" % ov)
+        out = self.run_cos("status").stdout
+        self.assertIn("overlay: %s (chief-of-staff.md, project-coo.md)" % os.path.abspath(ov), out)
+
+    def test_plugin_version_matches_version_file(self):
+        root = os.path.dirname(os.path.dirname(COS))
+        v = open(os.path.join(root, "VERSION")).read().strip()
+        pj = json.load(open(os.path.join(root, ".claude-plugin", "plugin.json")))
+        self.assertEqual(pj["version"], v, "plugin.json version must equal VERSION (installs report plugin.json)")
+        for skill in ("chief-of-staff", "project-coo", "production-vp", "helm"):
+            text = open(os.path.join(root, "skills", skill, "SKILL.md")).read()
+            self.assertIn("**Version:** %s" % v, text, skill)
+
     def test_vp_seeded_with_checks(self):
         self.run_cos("init")
         les = open(self.p("data", "Context", "Production_VP", "coo", "LESSONS.md")).read()

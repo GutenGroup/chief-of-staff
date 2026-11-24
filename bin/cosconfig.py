@@ -13,6 +13,7 @@ Exported names:
   PROJECTS list of project names
   MODE     single | lead | member
   MACHINE  this machine's id (machine_id, else the short hostname)
+  OVERLAY  local overlay folder (overlay_dir): per-install rules the skills read after their own text
 """
 import os
 import re
@@ -31,6 +32,7 @@ DEFAULTS = {
     "clear_at_cos": 150000,
     "clear_at_vp": 200000,
     "clear_at_coo": 150000,
+    "overlay_dir": "~/.claude/cos-overlay",
 }
 
 
@@ -115,6 +117,8 @@ OWNER = CONFIG.get("owner_name") or "you"
 PROJECTS = [str(p) for p in CONFIG.get("projects") or []]
 MODE = CONFIG.get("fleet_mode") or "single"
 CLAUDE_BIN = CONFIG.get("claude_bin") or "claude"
+OVERLAY = os.path.abspath(os.path.expanduser(os.environ.get("COS_OVERLAY") or CONFIG.get("overlay_dir")
+                                             or DEFAULTS["overlay_dir"]))
 
 
 def _int(name):

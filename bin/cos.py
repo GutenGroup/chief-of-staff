@@ -379,6 +379,8 @@ def cmd_status():
         ", ".join("%s %d" % kv for kv in q.items())))
     print("clear at: Chief of Staff %(cos)d, Production VP %(vp)d, COOs %(coo)d tokens" % C.CLEAR_AT)
     print("jev: %s" % ("key found (bin/jev.py)" if jev_key_present() else "no key: roles use their own judgment (docs/JEV.md)"))
+    files = sorted(f for f in os.listdir(C.OVERLAY) if f.endswith(".md")) if os.path.isdir(C.OVERLAY) else []
+    print("overlay: %s" % ("%s (%s)" % (C.OVERLAY, ", ".join(files)) if files else "none"))
     if C.MODE != "single":
         atomic_write(os.path.join(C.FLEET, "status", "chief-of-staff-%s.json" % C.MACHINE),
                      json.dumps({"machine": C.MACHINE, "at": now(), "mode": C.MODE, "queue": q}, indent=1))

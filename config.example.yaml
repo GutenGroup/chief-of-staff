@@ -18,6 +18,10 @@ job_repo_roots: []        # fleet mode only: folders a queued job may work in, e
                           # outside these runs in the data folder instead. Only share fleet_dir with machines you trust:
                           # anything that can write a machine's inbox can queue work on it.
 
+# Your own rules, one file per skill (chief-of-staff.md, project-coo.md, production-vp.md, helm.md). Each skill reads
+# its file after its own text and the overlay wins on conflict. Updates never touch it. See docs/REFERENCE.md.
+overlay_dir: ~/.claude/cos-overlay
+
 claude_bin: claude        # the Claude Code CLI used by job runners and the knowledge test
 
 # When each role clears its context (tokens). State lives in files, so a clear loses nothing; clearing far below the
