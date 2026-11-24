@@ -175,7 +175,7 @@ cat <<EOF
 
 Installed Chief of Staff $(cat "$REPO/VERSION").
 
-The Production VP comes standard (its charter and five training files are in place).
+The Production VP and the Communication VP come standard (charters and five training files are in place).
 Your COOs are yours to choose: the Chief of Staff guides you through it on its first run.
 
 First run:

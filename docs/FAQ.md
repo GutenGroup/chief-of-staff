@@ -21,6 +21,12 @@ little to do and costs almost nothing.
 It is always set up, but it only runs once you have at least one product COO. If all your COOs are non-product areas,
 it never starts. More: [The Production VP](PRODUCTION-VP.md).
 
+### What is the Communication VP?
+A standard role next to the Production VP that handles all your communication. COOs hand it what should be said; it
+drafts (its own model, or your own drafter), sends to the right people on Google Chat, botreeve groups or a shared folder,
+asks you first unless you have said "send without approval" for that person or group, and routes inbound messages to
+the right COO. Every message is signed as written by your Communication VP. More: [The Communication VP](COMMUNICATION-VP.md).
+
 ### How do I add a COO?
 Tell the Chief of Staff "add a COO", or run `/add-coo <name>`. It asks two or three dialog questions, writes the
 charter and goals, and starts the COO. By hand: `cos add-project "<Name>"` (see [Setting up COOs](SETTING-UP-COOS.md)).
@@ -70,10 +76,9 @@ knowledge test grades each role on its own files. Works for the Chief of Staff, 
 
 ### How do I add my own rules?
 Run `cos overlay init`. It creates your private overlay, `~/.claude/cos-overlay/`, with one file per skill (`chief-of-staff.md`,
-`project-coo.md`, `production-vp.md`, `helm.md`). Write your rules there in plain language: each skill reads its file
+`project-coo.md`, `production-vp.md`, `communication-vp.md`, `helm.md`). Write your rules there in plain language: each skill reads its file
 after its own text, the overlay wins on conflict, and plugin updates never touch it. Rules that would help everyone go
-upstream as a pull request instead. Optionally, a team can share company-wide rules by pointing `overlay_dir` at a shared
-folder or repository; it is not the default. More: [Add your own rules](OVERLAY.md).
+upstream as a pull request instead. The overlay is personal; people and teams connect through the Communication VP. More: [Add your own rules](OVERLAY.md).
 
 ### How do I teach a COO something?
 Tell it, or tell the Chief of Staff about it. Corrections become lessons in that COO's `coo/LESSONS.md` the same day, and

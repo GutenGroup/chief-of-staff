@@ -6,7 +6,7 @@ Setup and housekeeping
   cos.py add-project <Name> [--reports-to vp|cos]
                                     add a COO: product COOs report to the Production VP (default), IT, admin,
                                     growth and personal COOs to the Chief of Staff (--reports-to cos)
-  cos.py list-coos                  the Production VP and every COO with its report line and onboarding state
+  cos.py list-coos                  the Production VP, the Communication VP and every COO with its report line and onboarding state
   cos.py sidebar                    write ~/.claude/needs-input/sidebar.json for the Workspace panel
   cos.py status                     print mode, machine, folders, projects and queue counts
   cos.py overlay init               create your private rules overlay in ~/.claude/cos-overlay: one starter file per
@@ -110,6 +110,7 @@ def project_folder(name):
 
 
 VP_FOLDER = "Production_VP"
+COMMS_FOLDER = "Communication_VP"
 COS_FOLDER = "Chief_of_Staff"
 REPORTS_TO = {"owner": "The owner, directly.",
               "vp": "The Production VP (`CoS · Production VP`): build and board status. Needs-owner items go to the "
@@ -140,10 +141,14 @@ def cmd_init():
         made.append("DECISIONS.md")
     made += init_project("Chief of Staff", reports_to="owner", charter="COS_CHARTER.md")
     made += init_project("Production VP", charter="VP_CHARTER.md")
+    made += init_project("Communication VP", reports_to="cos", charter="COMMS_CHARTER.md")
     for p in C.PROJECTS:
         made += init_project(p)
     onboard(COS_FOLDER)
     onboard(VP_FOLDER)
+    onboard(COMMS_FOLDER)
+    here = os.path.dirname(os.path.realpath(__file__))
+    subprocess.run([sys.executable, os.path.join(here, "comms.py"), "init"], capture_output=True, text=True)
     write_sidebar()
     print("data root: %s\nfleet dir: %s\ncreated: %d file(s)%s" % (C.ROOT, C.FLEET, len(made), "".join("\n  " + m for m in made)))
     return 0
@@ -156,7 +161,8 @@ def onboard(folder):
 
 
 def cmd_list_coos():
-    rows = [("Chief of Staff", COS_FOLDER, "owner"), ("Production VP", VP_FOLDER, "Chief of Staff")]
+    rows = [("Chief of Staff", COS_FOLDER, "owner"), ("Production VP", VP_FOLDER, "Chief of Staff"),
+            ("Communication VP", COMMS_FOLDER, "Chief of Staff")]
     for p in C.PROJECTS:
         ch = os.path.join(C.ROOT, "Context", project_folder(p), "COO_CHARTER.md")
         txt = open(ch, encoding="utf-8").read() if os.path.exists(ch) else ""
@@ -171,7 +177,8 @@ def cmd_list_coos():
 # ---------------------------------------------------------------- learning
 def role_folder(role):
     f = project_folder(role)
-    aliases = {"CoS": COS_FOLDER, "Chief_of_Staff": COS_FOLDER, "VP": VP_FOLDER, "Production_VP": VP_FOLDER}
+    aliases = {"CoS": COS_FOLDER, "Chief_of_Staff": COS_FOLDER, "VP": VP_FOLDER, "Production_VP": VP_FOLDER,
+               "Comms": COMMS_FOLDER, "Communication_VP": COMMS_FOLDER}
     return aliases.get(f, f)
 
 
@@ -643,6 +650,7 @@ OVERLAY_SKILLS = {
     "chief-of-staff.md": "the Chief of Staff",
     "project-coo.md": "every COO",
     "production-vp.md": "the Production VP",
+    "communication-vp.md": "the Communication VP",
     "helm.md": "Helm (goals, charters, how the system runs)",
 }
 

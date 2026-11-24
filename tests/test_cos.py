@@ -222,8 +222,8 @@ class CosTest(unittest.TestCase):
     def test_overlay_init_creates_files_sets_config_never_overwrites(self):
         out = self.run_cos("overlay", "init").stdout
         ov = self.p(".claude", "cos-overlay")
-        self.assertIn("created: 4 file(s)", out)
-        for name in ("chief-of-staff.md", "project-coo.md", "production-vp.md", "helm.md"):
+        self.assertIn("created: 5 file(s)", out)
+        for name in ("chief-of-staff.md", "project-coo.md", "production-vp.md", "communication-vp.md", "helm.md"):
             self.assertIn("<!--", open(os.path.join(ov, name)).read())
         self.assertIn("overlay_dir: %s\n" % ov, open(self.cfg).read())
         with open(os.path.join(ov, "helm.md"), "w") as f:
@@ -233,7 +233,7 @@ class CosTest(unittest.TestCase):
         self.assertIn("created: 1 file(s) (project-coo.md)", out)
         self.assertEqual(open(os.path.join(ov, "helm.md")).read(), "my rule\n")
         self.assertEqual(open(self.cfg).read().count("overlay_dir:"), 1)
-        self.assertIn("overlay: %s (chief-of-staff.md, helm.md, production-vp.md, project-coo.md)" % ov,
+        self.assertIn("overlay: %s (chief-of-staff.md, communication-vp.md, helm.md, production-vp.md, project-coo.md)" % ov,
                       self.run_cos("status").stdout)
 
     def test_overlay_init_is_private_and_never_points_at_shared(self):
@@ -250,12 +250,75 @@ class CosTest(unittest.TestCase):
     def test_overlay_bad_usage(self):
         self.assertEqual(self.run_cos("overlay", ok=False).returncode, 2)
 
+    def run_comms(self, *args, ok=True, stdin=None):
+        env = dict(os.environ, HOME=self.home)
+        env.pop("COS_CONFIG", None)
+        env.pop("COS_DATA_ROOT", None)
+        r = subprocess.run([sys.executable, os.path.join(HERE, "bin", "comms.py")] + list(args), capture_output=True,
+                           text=True, env=env, input=stdin)
+        if ok:
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return r
+
+    def test_init_sets_up_communication_vp(self):
+        self.run_cos("init")
+        base = self.p("data", "Context", "Communication_VP")
+        self.assertIn("Communication VP charter", open(os.path.join(base, "COO_CHARTER.md")).read())
+        for f in ("CHANNELS.md", "CONTACTS.md", "PERMISSIONS.md"):
+            self.assertTrue(os.path.exists(os.path.join(base, "comms", f)), f)
+        self.assertTrue(os.path.exists(os.path.join(base, "coo", "PERSONA.md")))
+        self.assertIn("Communication VP", self.run_cos("list-coos").stdout)
+
+    def test_comms_send_authority_is_learned(self):
+        self.assertEqual(self.run_comms("can-send", "Sam").stdout.strip(), "ASK")
+        self.run_comms("allow", "Sam", "owner: send freely")
+        self.assertEqual(self.run_comms("can-send", "Sam").stdout.strip(), "SEND")
+        self.run_comms("verify", "Sam", "--kind", "pricing", "owner: always check pricing")
+        self.assertEqual(self.run_comms("can-send", "Sam", "--kind", "pricing").stdout.strip(), "ASK")
+        self.assertEqual(self.run_comms("can-send", "Sam", "--kind", "update").stdout.strip(), "SEND")
+        self.run_comms("verify", "Sam")
+        self.assertEqual(self.run_comms("can-send", "Sam").stdout.strip(), "ASK")
+        self.run_comms("allow", "*")
+        self.assertEqual(self.run_comms("can-send", "Lee").stdout.strip(), "SEND")
+        self.assertEqual(self.run_comms("can-send", "Sam").stdout.strip(), "ASK")
+
+    def test_comms_queue_and_done(self):
+        path = self.run_comms("queue", "--from", "Acme", "--to", "Sam", "--kind", "update", "Release 2 is live").stdout.strip()
+        self.assertTrue(os.path.exists(path))
+        self.assertIn("1 pending", self.run_comms("outbox").stdout)
+        self.run_comms("done", os.path.basename(path), "--sent", "team-chat: release note")
+        self.assertIn("0 pending", self.run_comms("outbox").stdout)
+        log = open(self.p("data", "fleet", "comms", "LOG.md")).read()
+        self.assertIn("| sent |", log)
+        self.assertEqual(self.run_comms("queue", "--to", "Sam", "x", ok=False).returncode, 2)
+
+    def test_comms_folder_channel_and_signature(self):
+        self.run_comms("init")
+        shared = self.p("shared")
+        with open(self.p("data", "Context", "Communication_VP", "comms", "CHANNELS.md"), "a") as f:
+            f.write("- drop | folder | %s | notes for the assistant\n" % shared)
+        msg = self.p("note.md")
+        open(msg, "w").write("hello\n")
+        out = self.run_comms("folder-send", "drop", msg).stdout.strip()
+        self.assertTrue(out.startswith(shared) and os.path.exists(out))
+        first = self.run_comms("folder-read", "drop").stdout.split()
+        self.assertEqual(len(first), 1)
+        self.assertEqual(self.run_comms("folder-read", "drop").stdout.strip(), "")
+        self.assertEqual(self.run_comms("signature").stdout.strip(), "Written and drafted by Alex's Communication VP.")
+
+    def test_comms_drafter_is_pluggable(self):
+        r = self.run_comms("draft", "--to", "Sam", ok=False, stdin="brief")
+        self.assertEqual((r.returncode, r.stdout.strip()), (3, "DRAFT-WITH-OWN-MODEL"))
+        with open(self.cfg, "a") as f:
+            f.write("comms_drafter: \"tr a-z A-Z; echo; echo $COMMS_TO\"\n")
+        self.assertEqual(self.run_comms("draft", "--to", "Sam", stdin="brief").stdout.split(), ["BRIEF", "Sam"])
+
     def test_plugin_version_matches_version_file(self):
         root = os.path.dirname(os.path.dirname(COS))
         v = open(os.path.join(root, "VERSION")).read().strip()
         pj = json.load(open(os.path.join(root, ".claude-plugin", "plugin.json")))
         self.assertEqual(pj["version"], v, "plugin.json version must equal VERSION (installs report plugin.json)")
-        for skill in ("chief-of-staff", "project-coo", "production-vp", "helm"):
+        for skill in ("chief-of-staff", "project-coo", "production-vp", "communication-vp", "helm"):
             text = open(os.path.join(root, "skills", skill, "SKILL.md")).read()
             self.assertIn("**Version:** %s" % v, text, skill)
 

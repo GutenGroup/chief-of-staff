@@ -34,6 +34,7 @@ would help every user goes upstream as a pull request, so your install stays on 
 
 ```
 cos status                 mode, folders, projects, job queue
+comms.py outbox|permissions|allow|verify|channels   the Communication VP's helper (docs/COMMUNICATION-VP.md)
 cos overlay init           your private overlay, ~/.claude/cos-overlay (never overwrites; sets overlay_dir if unset)
 cos init                   create missing folders and starter files (never overwrites)
 cos add-project <Name> [--reports-to cos]   add a COO (default: reports to the Production VP)

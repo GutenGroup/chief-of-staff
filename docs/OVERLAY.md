@@ -10,13 +10,14 @@ private folder of your own that the skills read on top of the package. By defaul
 cos overlay init
 ```
 
-This creates your private overlay, `~/.claude/cos-overlay/`, with four starter files, one per skill:
+This creates your private overlay, `~/.claude/cos-overlay/`, with five starter files, one per skill:
 
 | File | Read by |
 |---|---|
 | `chief-of-staff.md` | the Chief of Staff |
 | `project-coo.md` | every COO |
 | `production-vp.md` | the Production VP |
+| `communication-vp.md` | the Communication VP (your drafter, channels, register) |
 | `helm.md` | Helm (goals, charters, how the system runs) |
 
 Each starts as a short comment that explains what to write and adds no rules. `cos overlay init` never overwrites a
@@ -52,32 +53,8 @@ If you are not sure: would a stranger installing the plugin want this rule? Yes 
 ([CONTRIBUTING](https://github.com/GutenGroup/chief-of-staff/blob/main/CONTRIBUTING.md)). No means your overlay.
 Keeping your own rules out of the plugin files is what lets you take every new release without merging anything.
 
-## Optional: share rules with your team
+## People and teams connect through the Communication VP
 
-You do not need this. The private overlay above is the default and covers one person. Read on only if several people
-on a team want the same company-wide rules.
-
-**What to share and what to keep private**
-
-| Share with the team | Keep in your private overlay |
-|---|---|
-| company-wide rules: how work is routed, who owns what, review and release policy | your personal preferences: how you like to be asked, your working hours |
-| the team's shared folders, tools and services | your own accounts, machines and paths |
-| names of the company's products and areas | anything about one person only |
-
-**How**
-
-1. Put the shared rules in a folder everyone can read: a shared drive folder, or better a git repository, so changes
-   are reviewed and everyone gets them on their next pull. Use the same four file names.
-2. Each person who wants them points `overlay_dir` at that folder in their own `~/.claude/cos-config.yaml`:
-
-   ```yaml
-   overlay_dir: ~/repos/team-config/cos-overlay
-   ```
-
-3. `cos status` confirms it: the `overlay:` line names the shared folder.
-
-The skills read one overlay folder. When you point `overlay_dir` at the shared one, put any personal rules you still
-want there under your own heading, or keep them out. `cos overlay init` only ever creates the private folder; it never
-points you at a shared one. Anyone who can write the shared folder changes how every Chief of Staff on the team behaves,
-so give write access only to people you trust.
+Each person personalizes their own Chief of Staff with their own overlay; overlays are not shared. People and teams
+connect through the [Communication VP](COMMUNICATION-VP.md): it sends each person and group what they should get, on
+the channels you choose, and botreeve groups let several people's Chief of Staff installs talk to each other.

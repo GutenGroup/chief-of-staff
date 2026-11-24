@@ -98,7 +98,7 @@ export COS_NO_LAUNCHD=1 COS_NO_KNOWLEDGE_TEST=1   # never load a real LaunchAgen
 "$REPO/install.sh" --yes --owner Sam >/tmp/cos-install-4.log 2>&1
 check "default install exits 0" '[ $? -eq 0 ]'
 check "default config has no COOs" 'grep -q "^projects: \[\]" "$HOME/.claude/cos-config.yaml"'
-check "default Context holds the CoS and the VP" '[ "$(ls "$HOME/ChiefOfStaff/Context" | tr "\n" " ")" = "Chief_of_Staff Production_VP " ]'
+check "default Context holds the CoS and both VPs" '[ "$(ls "$HOME/ChiefOfStaff/Context" | tr "\n" " ")" = "Chief_of_Staff Communication_VP Production_VP " ]'
 python3 "$REPO/bin/cos.py" add-project "First App" >/dev/null 2>&1
 check "add-project into empty list" 'grep -q "^  - First App" "$HOME/.claude/cos-config.yaml" && ! grep -q "projects: \[\]" "$HOME/.claude/cos-config.yaml"'
 rm -rf "$HOME"

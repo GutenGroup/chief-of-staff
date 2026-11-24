@@ -8,6 +8,7 @@ you
      ├─ Production VP       Opus, medium   standard: supervises the product COOs
      │   └─ product COOs    Sonnet, low    one per product, "CoS · <Name> COO"
      │       └─ workers     Haiku/Sonnet   do the actual work
+     ├─ Communication VP    Opus, medium   standard: every message in and out
      └─ other COOs          Sonnet, low    IT, admin, growth, personal
 ```
 
@@ -19,6 +20,7 @@ Each level coordinates the one below and does not do its work. Workers do the wo
 |---|---|---|
 | Chief of Staff | every 30 min | reads every session and COO report, clears false "needs input" flags, nudges stalled work, writes the brief, raises your decisions as dialogs |
 | Production VP | every 3 h | reads each product COO's report, sends back "done" that was not verified, coaches |
+| Communication VP | every 30 min | drains the outbox (drafts, sends or asks), reads inbound channels, routes what came in |
 | Each COO | every 3 h | checks its workers, starts the next job, writes one report line |
 | Workers | per job | do one job, verify it, report |
 

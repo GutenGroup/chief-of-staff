@@ -68,6 +68,6 @@ cos overlay init
 
 It creates your private overlay, `~/.claude/cos-overlay/`, with one starter file per skill. Edit them in plain language;
 each skill reads its file after its own instructions and the overlay wins on conflict. More:
-[Add your own rules](OVERLAY.md), which also covers sharing company-wide rules with a team (optional).
+[Add your own rules](OVERLAY.md).
 
 Next: [How it works](HOW-IT-WORKS.md) · [Setting up COOs](SETTING-UP-COOS.md) · [FAQ](FAQ.md)

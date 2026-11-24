@@ -1,7 +1,7 @@
 # Chief of Staff
 
 An operating layer for Claude Code. One **Chief of Staff** session watches all your other sessions. A **Production VP**
-comes standard. You choose your own **COOs**, one per product or area of your work, and the Chief of Staff guides you
+and a **Communication VP** (all your messages in and out) come standard. You choose your own **COOs**, one per product or area of your work, and the Chief of Staff guides you
 through that. The COOs hand the real work to cheap **worker** sessions.
 You only see a short brief and the decisions that need you, each one a click-through dialog with a recommendation.
 
@@ -13,6 +13,7 @@ you
      ├─ Production VP       (Opus, medium)   standard: supervises the product COOs
      │   └─ product COOs    (Sonnet, low)    one per product or business line YOU choose, "CoS · <Name> COO"
      │       └─ workers     (Haiku/Sonnet)   do the actual work, report to their COO
+     ├─ Communication VP    (Opus, medium)   standard: every message in and out, for every role
      └─ other COOs          (Sonnet, low)    optional: IT, admin, growth, personal; report to the Chief of Staff
 ```
 
@@ -48,7 +49,7 @@ Then start a session titled **Chief of Staff** (Opus, medium) and send `/chief-o
 
 - **Docs site:** https://guten.group/ai/chief-of-staff/
 - **In the repo:** [Getting started](docs/GETTING-STARTED.md) · [Setting up COOs](docs/SETTING-UP-COOS.md) ·
-  [How it works](docs/HOW-IT-WORKS.md) · [Operating](docs/OPERATING.md) · [Production VP](docs/PRODUCTION-VP.md) · [How it learns](docs/HOW-IT-LEARNS.md) · [Add your own rules](docs/OVERLAY.md) ·
+  [How it works](docs/HOW-IT-WORKS.md) · [Operating](docs/OPERATING.md) · [Production VP](docs/PRODUCTION-VP.md) · [Communication VP](docs/COMMUNICATION-VP.md) · [How it learns](docs/HOW-IT-LEARNS.md) · [Add your own rules](docs/OVERLAY.md) ·
   [Models and costs](docs/MODELS-AND-COSTS.md) · [With and without Jev](docs/JEV.md) · [FAQ](docs/FAQ.md) ·
   [Troubleshooting](docs/TROUBLESHOOTING.md) · [Reference](docs/REFERENCE.md)
 - **Inside Claude Code:** `/cos-help <your question>`

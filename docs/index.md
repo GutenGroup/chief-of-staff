@@ -10,7 +10,7 @@ The documentation lives at **[guten.group/ai/chief-of-staff](https://guten.group
 # Chief of Staff for Claude Code
 
 A management layer for your Claude Code sessions. One **Chief of Staff** session watches every other session, a
-**Production VP** comes standard, you choose your own **COOs** through a guided interview, and cheap **worker** sessions
+**Production VP** and a **Communication VP** come standard, you choose your own **COOs** through a guided interview, and cheap **worker** sessions
 do the work. You get a short brief and click-through decisions.
 
 Built and tuned for a product studio running several products (a COO per product, a Production VP across them), and it works for anyone: one business, a solo founder, side projects or personal areas. The COO setup interview adapts to you.
@@ -27,8 +27,9 @@ Built and tuned for a product studio running several products (a COO per product
 - [How it works](HOW-IT-WORKS.md): the ladder, loops, auto-clear, dialogs, training
 - [Operating](OPERATING.md): memory and clearing, max context, models and effort, loops
 - [The Production VP](PRODUCTION-VP.md)
+- [The Communication VP](COMMUNICATION-VP.md): all your communication, learned send authority, botreeve as the bridge
 - [How it learns](HOW-IT-LEARNS.md)
-- [Add your own rules](OVERLAY.md): your private overlay, what goes upstream, optional team sharing
+- [Add your own rules](OVERLAY.md): your private overlay, what goes upstream
 - [Models and costs](MODELS-AND-COSTS.md)
 - [With and without Jev](JEV.md): optional decision model, the tradeoff
 - [FAQ](FAQ.md)
