@@ -54,6 +54,11 @@ Then start a session titled **⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅
   [Troubleshooting](docs/TROUBLESHOOTING.md) · [Reference](docs/REFERENCE.md)
 - **Inside Claude Code:** `/cos-help <your question>`
 
+## Contributing
+
+Anyone can propose a change by pull request. Guten Group reviews it and decides what merges; releases ship only from
+what we merge. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
