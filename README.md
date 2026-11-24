@@ -56,8 +56,8 @@ Then start a session titled **⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅
 
 ## Contributing
 
-Anyone can propose a change by pull request. Daniel Ekstrom and Tony Högqvist decide what merges; releases ship only
-from what they merge. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Anyone can propose a change by pull request. Guten Group reviews it and decides what merges; releases ship only from
+what we merge. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

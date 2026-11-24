@@ -1,7 +1,7 @@
 # Contributing
 
-Anyone can propose a change. Daniel Ekstrom and Tony Högqvist decide what merges, and a release ships only from what
-they merge.
+Anyone can propose a change. Guten Group reviews every proposal and decides what merges, and a release ships only from
+what we merge.
 
 ## Proposing a change
 
@@ -10,16 +10,16 @@ they merge.
    overlay (see [docs/OVERLAY.md](docs/OVERLAY.md)).
 3. Update `HIGHLIGHTS.md` with what users can now do (3-6 plain bullets); it becomes the release's `## Highlights`
    section.
-4. Daniel Ekstrom and Tony Högqvist are the code owners (`.github/CODEOWNERS`). A pull request needs an approving
-   review from one of them before it can merge; nobody else can approve a merge or push to `main`.
+4. A Guten Group member reviews it. A pull request from outside the organization needs an approving review from a
+   member before it can merge; nobody outside the organization can push to `main`.
 
 ## Checks
 
 Every pull request runs the same checks as a release: a private-data check, `claude plugin validate --profile
-directory`, and the tests. For a first-time contributor, the run starts only after it is approved, and pull requests
+directory`, and the tests. For a first-time contributor, a member approves the run before it starts, and pull requests
 from forks never receive the repository's secrets.
 
 ## Releases
 
-Only the two code owners and the release automation acting on their behalf push to `main`. A green change on `main` is
+Only Guten Group members and the organization's own release automation push to `main`. A green change on `main` is
 tagged and published as a GitHub Release; installs pick it up on their next update. A red check blocks the release.
