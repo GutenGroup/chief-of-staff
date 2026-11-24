@@ -9,6 +9,19 @@ import subprocess
 import sys
 
 
+def _version(path):
+    try:
+        with open(os.path.join(path, "VERSION")) as f:
+            return tuple(int(x) for x in f.read().strip().split("."))
+    except (OSError, ValueError):
+        return ()
+
+
+def newer_installed(link, root):
+    """True when the link already points at a newer plugin version than this root."""
+    return os.path.islink(link) and os.path.isdir(link) and _version(link) > _version(root)
+
+
 def main():
     root = os.environ.get("CLAUDE_PLUGIN_ROOT") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     home = os.path.expanduser("~")
@@ -17,7 +30,8 @@ def main():
     os.makedirs(flags, exist_ok=True)
     link = os.path.join(claude, "chief-of-staff")
     if os.path.islink(link) or not os.path.exists(link):
-        if not (os.path.islink(link) and os.readlink(link) == root):
+        # A session started before an update still runs the old plugin root; it must never move the link back.
+        if not (os.path.islink(link) and os.readlink(link) == root) and not newer_installed(link, root):
             tmp = link + ".tmp-cos"
             if os.path.lexists(tmp):
                 os.remove(tmp)

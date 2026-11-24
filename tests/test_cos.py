@@ -329,5 +329,24 @@ class CosTest(unittest.TestCase):
         self.assertIn("CHECK no-handtyped-timestamp", les)
 
 
+
+    def test_bootstrap_never_moves_link_to_older_version(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("pb", os.path.join(HERE, "bin", "plugin_bootstrap.py"))
+        pb = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(pb)
+        d = tempfile.mkdtemp()
+        old, new = os.path.join(d, "1.9.0"), os.path.join(d, "1.10.0")
+        for path, v in ((old, "1.9.0"), (new, "1.10.0")):
+            os.makedirs(path)
+            with open(os.path.join(path, "VERSION"), "w") as f:
+                f.write(v + "\n")
+        link = os.path.join(d, "chief-of-staff")
+        os.symlink(new, link)
+        self.assertTrue(pb.newer_installed(link, old))
+        os.remove(link)
+        os.symlink(old, link)
+        self.assertFalse(pb.newer_installed(link, new))
+
 if __name__ == "__main__":
     unittest.main()
