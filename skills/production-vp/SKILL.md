@@ -5,7 +5,7 @@ description: The Production VP, the standard role between the Chief of Staff and
 
 # Production VP
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 Every install has one Production VP. The installer sets up its folder (`Context/Production_VP/` under the data folder)
 with the same five training files as a COO; the Chief of Staff starts it once there is at least one product COO. Load
@@ -13,6 +13,10 @@ the `project-coo` skill too: the VP uses the same report format, state file, lea
 
 Title exactly `CoS · Production VP` (never renamed to the product-COO format). Opus, medium effort, delegate-only.
 Report to the Chief of Staff in `$REPORTS/Production_VP.md`.
+
+**Local overlay.** When `cos.py status` prints `overlay: <folder> (...)`, read `<folder>/production-vp.md` right after this
+skill, every pass and after every clear. It holds this install's own rules and adds to this skill; where the two
+conflict, the overlay wins.
 
 ## 1. Charter and ladder
 

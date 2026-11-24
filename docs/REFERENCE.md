@@ -23,8 +23,12 @@ Fill in the charter and goals, run `coo_onboard.py New_Thing`, then ask the Chie
 | `<data>/Context/<Project>/` | charter, goals, `_COO_STATE.md`, `COO_LESSONS.md`, `coo/` (the five training files) |
 | `<data>/fleet/coo-reports/<Project>.md` | each COO's report, newest line first; the Chief of Staff reads these every pass |
 | `<data>/DECISIONS.md` | your decisions, so nobody asks twice |
+| `~/.claude/cos-overlay/` (`overlay_dir`) | optional: your own rules, one file per skill (`chief-of-staff.md`, `project-coo.md`, `production-vp.md`, `helm.md`). Each skill reads its file after its own text; the overlay wins on conflict. Updates never touch it |
 
 The data folder is plain markdown. Keep it in a synced folder if you want it on several machines.
+
+**Overlay or pull request?** Names, paths, tools and policies that only fit your setup go in the overlay. A rule that
+would help every user goes upstream as a pull request, so your install stays on the released version.
 
 ## Commands
 

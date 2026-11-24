@@ -5,7 +5,7 @@ description: Helm is the operating model behind the Chief of Staff: the owner se
 
 # Helm
 
-**Version:** 1.0.0
+**Version:** 1.2.0
 
 Rules in one line each:
 - The owner sets direction; agents run it; people are enabled by agents.
@@ -17,6 +17,13 @@ Rules in one line each:
 - Decisions the owner takes go into `DECISIONS.md` the same turn, so nobody asks twice.
 - Work goes to the cheapest model that can do it; Opus is for design and judgment.
 - COOs are trained like employees: five files, a lessons log, CHECK rules, a weekly review, a monthly knowledge test.
-- Skills: `chief-of-staff` (runs the system), `project-coo` (one per project).
+- Goals are monthly. The Chief of Staff challenges each goal against the owner's top priority, and the owner approves
+  all goals in one pack. Review on the last day of the month.
+- An issue that touches several COOs is settled by an evidence-backed vote of the COOs it affects. No majority, an
+  irreversible or outward step, money or people go to the owner.
+- Plain vocabulary with the owner: goals, numbers, the daily report. No third-party framework terms.
+- Skills: `chief-of-staff` (runs the system), `project-coo` (one per project), `production-vp` (the build standard).
+- Local overlay: when `cos.py status` names one, `<overlay>/helm.md` adds this install's own Helm rules and wins on
+  conflict.
 
 Templates: `~/.claude/chief-of-staff/templates/` (COO_CHARTER, GOALS, COO_STATE, COO_LESSONS, DECISIONS, job).
