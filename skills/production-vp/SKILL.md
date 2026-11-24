@@ -5,7 +5,7 @@ description: The Production VP, the standard role between the Chief of Staff and
 
 # Production VP
 
-**Version:** 1.5.1
+**Version:** 1.5.2
 
 Every install has one Production VP. The installer sets up its folder (`Context/Production_VP/` under the data folder)
 with the same five training files as a COO; the Chief of Staff starts it once there is at least one product COO. Load
