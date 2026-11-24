@@ -70,9 +70,10 @@ def structural(key):
 def llm(model, prompt, timeout=240):
     cmd = [CLAUDE, "-p", "--model", model, "--effort", "low", "--no-session-persistence", "--output-format", "text",
            "--disallowedTools", "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch"]
-    # run on the user's Claude Code login, never an inherited ANTHROPIC_* override
-    env = {k: v for k, v in os.environ.items() if not k.startswith("ANTHROPIC_")}
-    env["PATH"] = os.path.expanduser("~/.local/bin") + ":" + env.get("PATH", "")
+    # a minimal environment: the user's Claude Code login, no inherited overrides or keys
+    home = os.path.expanduser("~")
+    env = {"HOME": home, "LANG": "en_US.UTF-8",
+           "PATH": home + "/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"}
     r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout, env=env)
     out = (r.stdout or "").strip()
     if r.returncode != 0 or not out or out.startswith("Failed to authenticate"):
