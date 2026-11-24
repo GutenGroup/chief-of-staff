@@ -236,15 +236,14 @@ class CosTest(unittest.TestCase):
         self.assertIn("overlay: %s (chief-of-staff.md, helm.md, production-vp.md, project-coo.md)" % ov,
                       self.run_cos("status").stdout)
 
-    def test_overlay_init_keeps_existing_overlay_dir(self):
+    def test_overlay_init_is_private_and_never_points_at_shared(self):
         shared = self.p("team-rules")
         with open(self.cfg, "a") as f:
             f.write("overlay_dir: %s\n" % shared)
         before = open(self.cfg).read()
-        self.run_cos("overlay", "init")
-        self.assertTrue(os.path.exists(os.path.join(shared, "chief-of-staff.md")))
-        self.assertEqual(open(self.cfg).read(), before)
-        out = self.run_cos("overlay", "init", self.p("elsewhere")).stdout
+        out = self.run_cos("overlay", "init").stdout
+        self.assertTrue(os.path.exists(self.p(".claude", "cos-overlay", "chief-of-staff.md")))
+        self.assertFalse(os.path.exists(shared))
         self.assertIn("left unchanged", out)
         self.assertEqual(open(self.cfg).read(), before)
 

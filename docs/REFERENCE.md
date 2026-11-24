@@ -34,7 +34,7 @@ would help every user goes upstream as a pull request, so your install stays on 
 
 ```
 cos status                 mode, folders, projects, job queue
-cos overlay init [DIR]     starter files for your own rules (never overwrites; sets overlay_dir if unset)
+cos overlay init           your private overlay, ~/.claude/cos-overlay (never overwrites; sets overlay_dir if unset)
 cos init                   create missing folders and starter files (never overwrites)
 cos add-project <Name> [--reports-to cos]   add a COO (default: reports to the Production VP)
 cos list-coos              the Production VP and every COO

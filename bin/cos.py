@@ -9,8 +9,8 @@ Setup and housekeeping
   cos.py list-coos                  the Production VP and every COO with its report line and onboarding state
   cos.py sidebar                    write ~/.claude/needs-input/sidebar.json for the Workspace panel
   cos.py status                     print mode, machine, folders, projects and queue counts
-  cos.py overlay init [DIR]         create your own-rules overlay: one starter file per skill (never overwrites);
-                                    sets overlay_dir in the config when it is not set yet (docs/OVERLAY.md)
+  cos.py overlay init               create your private rules overlay in ~/.claude/cos-overlay: one starter file per
+                                    skill (never overwrites); sets overlay_dir when it is not set yet (docs/OVERLAY.md)
 
 Learning (every role: the Chief of Staff, the Production VP, each COO)
   cos.py lesson <Role> "<text>" [--check <id> "<regex>"]
@@ -667,7 +667,7 @@ Delete this comment when you add your first rule. A file with only this comment 
 
 def cmd_overlay(rest):
     if not rest or rest[0] != "init":
-        print("usage: cos overlay init [DIR]")
+        print("usage: cos overlay init")
         return 2
     path = C.config_path()
     try:
@@ -675,7 +675,8 @@ def cmd_overlay(rest):
     except OSError:
         text = ""
     has_key = any(re.match(r"overlay_dir\s*:", l) for l in text.splitlines())
-    target = os.path.abspath(os.path.expanduser(rest[1])) if len(rest) > 1 else C.OVERLAY
+    # Always the private, per-user folder. Sharing rules with a team is a deliberate, separate step (docs/OVERLAY.md).
+    target = os.path.abspath(os.path.expanduser(C.DEFAULTS["overlay_dir"]))
     os.makedirs(target, exist_ok=True)
     made = []
     for name, who in OVERLAY_SKILLS.items():
@@ -686,13 +687,14 @@ def cmd_overlay(rest):
             fh.write(OVERLAY_TEMPLATE % {"who": who, "skill": who[0].upper() + who[1:]})
         made.append(name)
     print("overlay: %s\ncreated: %d file(s)%s" % (target, len(made), (" (%s)" % ", ".join(made)) if made else ""))
-    if not has_key and not os.environ.get("COS_OVERLAY"):
+    if not has_key:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "a", encoding="utf-8") as fh:
             fh.write(("" if not text or text.endswith("\n") else "\n") + "overlay_dir: %s\n" % target)
         print("config: overlay_dir set to %s in %s" % (target, path))
     elif os.path.abspath(C.OVERLAY) != target:
-        print("config: overlay_dir already points at %s; left unchanged" % C.OVERLAY)
+        print("config: overlay_dir points at %s, so the skills read that folder, not this one; left unchanged"
+              % C.OVERLAY)
     return 0
 
 

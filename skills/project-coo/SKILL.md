@@ -5,7 +5,7 @@ description: The COO of one project. Coordinates every session in that project, 
 
 # Project COO
 
-**Version:** 1.3.0
+**Version:** 1.3.1
 
 Ladder: owner -> Chief of Staff -> (Production VP) -> **you, the COO of ONE project** -> worker sessions. You coordinate;
 you do not do the work. Run `python3 ~/.claude/chief-of-staff/bin/cos.py status` once to learn the data root (`$DATA`)
