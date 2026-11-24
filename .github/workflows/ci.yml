@@ -21,6 +21,8 @@ jobs:
         env:
           DENY_PATTERNS: ${{ secrets.DENY_PATTERNS }}
         run: python3 .github/scripts/pii_check.py .
+      - name: Highlights (3-6 bullets)
+        run: python3 .github/scripts/highlights.py
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -41,6 +43,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Highlights
+        run: python3 .github/scripts/highlights.py > /tmp/highlights.md
       - name: Tag and release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -50,7 +54,12 @@ jobs:
           git config user.email "noreply@guten.group"
           v=$(tr -d ' \n' < VERSION)
           if git rev-parse -q --verify "refs/tags/v$v" >/dev/null; then
-            if [ "$(git rev-list -n1 "v$v")" = "$(git rev-parse HEAD)" ]; then echo "HEAD is already v$v"; exit 0; fi
+            if [ "$(git rev-list -n1 "v$v")" = "$(git rev-parse HEAD)" ]; then
+              if gh release view "v$v" >/dev/null 2>&1; then echo "HEAD is already v$v, released"; exit 0; fi
+              prev=$(git describe --tags --abbrev=0 "v$v^" 2>/dev/null || true)
+              gh release create "v$v" --title "Chief of Staff v$v" --notes-file /tmp/highlights.md --generate-notes ${prev:+--notes-start-tag "$prev"}
+              exit 0
+            fi
             IFS=. read -r a b c <<<"$v"; v="$a.$b.$((c + 1))"
             echo "$v" > VERSION
             python3 - "$v" <<'PY'
@@ -64,4 +73,4 @@ jobs:
           git tag -a "v$v" -m "Chief of Staff v$v"
           git push -q origin "v$v"
           prev=$(git describe --tags --abbrev=0 "v$v^" 2>/dev/null || true)
-          gh release create "v$v" --title "Chief of Staff v$v" --generate-notes ${prev:+--notes-start-tag "$prev"}
+          gh release create "v$v" --title "Chief of Staff v$v" --notes-file /tmp/highlights.md --generate-notes ${prev:+--notes-start-tag "$prev"}
