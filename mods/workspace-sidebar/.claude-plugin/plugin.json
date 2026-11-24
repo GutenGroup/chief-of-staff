@@ -1,0 +1,10 @@
+{
+  "name": "workspace-sidebar",
+  "version": "1.0.0",
+  "description": "Chief of Staff Workspace panel: sessions grouped by project tier, the brief, and owner-input cards",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Guten Group"
+  },
+  "license": "MIT"
+}

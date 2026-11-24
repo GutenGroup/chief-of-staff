@@ -1,0 +1,19 @@
+{
+  "name": "chief-of-staff",
+  "version": "1.0.0",
+  "description": "An operating layer for Claude Code: one Chief of Staff session watches every other session, a Production VP comes standard, you choose your own COOs through a guided interview, and cheap worker sessions do the work. You get a short brief and click-through decisions.",
+  "author": {
+    "name": "Guten Group"
+  },
+  "homepage": "https://guten.group/ai/chief-of-staff/",
+  "repository": "https://github.com/GutenGroup/chief-of-staff",
+  "license": "MIT",
+  "keywords": [
+    "chief-of-staff",
+    "coordination",
+    "sessions",
+    "delegation",
+    "productivity",
+    "agents"
+  ]
+}

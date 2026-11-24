@@ -1,0 +1,11 @@
+{
+  "name": "cos-mods",
+  "owner": { "name": "Guten Group" },
+  "plugins": [
+    {
+      "name": "workspace-sidebar",
+      "source": "./workspace-sidebar",
+      "description": "Chief of Staff Workspace panel: sessions grouped by project tier, the brief, and owner-input cards"
+    }
+  ]
+}

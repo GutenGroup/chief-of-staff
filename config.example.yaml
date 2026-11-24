@@ -1,0 +1,21 @@
+# Chief of Staff config. install.sh copies this to ~/.claude/cos-config.yaml (never overwrites it).
+# Edit that copy, then run: python3 ~/.claude/chief-of-staff/bin/cos.py init
+
+owner_name: ""            # your first name; the agents call you this ("you" when empty)
+data_root: ~/ChiefOfStaff  # Context/<Project>/ files, DECISIONS.md and (single mode) fleet/ live here
+
+# Your COOs (one per product or business line, plus optional IT, admin, growth, personal).
+# Leave this empty: the Chief of Staff interviews you on its first run and fills it in.
+# Guide: docs/SETTING-UP-COOS.md. Add one later with: cos add-project <Name> [--reports-to cos]
+projects: []
+
+# single = one computer (default). lead / member = several computers that share fleet_dir.
+fleet_mode: single
+fleet_dir: ""             # fleet mode only: a folder every machine syncs (a cloud-synced folder, Syncthing, a NAS share)
+machine_id: ""            # fleet mode only: this machine's short name (default: the hostname)
+lead_machine: ""          # fleet mode only: the machine whose Chief of Staff merges the briefs
+job_repo_roots: []        # fleet mode only: folders a queued job may work in, e.g. [~/code]. A job whose `repo:` is
+                          # outside these runs in the data folder instead. Only share fleet_dir with machines you trust:
+                          # anything that can write a machine's inbox can queue work on it.
+
+claude_bin: claude        # the Claude Code CLI used by job runners and the knowledge test

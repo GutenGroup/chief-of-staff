@@ -1,0 +1,19 @@
+{
+  "name": "chief-of-staff",
+  "owner": {
+    "name": "Guten Group"
+  },
+  "description": "The Chief of Staff system for Claude Code, plus its optional Workspace panel.",
+  "plugins": [
+    {
+      "name": "chief-of-staff",
+      "source": "./",
+      "description": "Chief of Staff, a standard Production VP, guided COO setup, cheap workers, a daily brief and dialog-only decisions."
+    },
+    {
+      "name": "workspace-sidebar",
+      "source": "./mods/workspace-sidebar",
+      "description": "Optional Claude desktop app panel: sessions grouped by COO, the Chief of Staff brief, and decision cards."
+    }
+  ]
+}
