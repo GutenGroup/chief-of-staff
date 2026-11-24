@@ -70,9 +70,8 @@ def structural(key):
 def llm(model, prompt, timeout=240):
     cmd = [CLAUDE, "-p", "--model", model, "--effort", "low", "--no-session-persistence", "--output-format", "text",
            "--disallowedTools", "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch"]
-    env = dict(os.environ)
-    for v in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"):
-        env.pop(v, None)
+    # run on the user's Claude Code login, never an inherited ANTHROPIC_* override
+    env = {k: v for k, v in os.environ.items() if not k.startswith("ANTHROPIC_")}
     env["PATH"] = os.path.expanduser("~/.local/bin") + ":" + env.get("PATH", "")
     r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout, env=env)
     out = (r.stdout or "").strip()
