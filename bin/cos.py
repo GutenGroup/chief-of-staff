@@ -7,6 +7,7 @@ Setup and housekeeping
                                     add a COO: product COOs report to the Production VP (default), IT, admin,
                                     growth and personal COOs to the Chief of Staff (--reports-to cos)
   cos.py list-coos                  the Production VP, the Communication VP and every COO with its report line and onboarding state
+  cos.py layout                     print the expected sidebar layout: the Chief of Staff title, the group, every role title
   cos.py sidebar                    write ~/.claude/needs-input/sidebar.json for the Workspace panel
   cos.py status                     print mode, machine, folders, projects and queue counts
   cos.py overlay init               create your private rules overlay in ~/.claude/cos-overlay: one starter file per
@@ -113,7 +114,7 @@ VP_FOLDER = "Production_VP"
 COMMS_FOLDER = "Communication_VP"
 COS_FOLDER = "Chief_of_Staff"
 REPORTS_TO = {"owner": "The owner, directly.",
-              "vp": "The Production VP (`CoS · Production VP`): build and board status. Needs-owner items go to the "
+              "vp": "The Production VP (`Production VP`): build and board status. Needs-owner items go to the "
                     "Chief of Staff.",
               "cos": "The Chief of Staff, directly (not a product line)."}
 
@@ -170,7 +171,18 @@ def cmd_list_coos():
     for title, folder, up in rows:
         coo = os.path.join(C.ROOT, "Context", folder, "coo")
         n = len([f for f in ("PERSONA", "PLAYBOOK", "KNOWLEDGE", "LESSONS", "SCORECARD") if os.path.exists(os.path.join(coo, f + ".md"))])
-        print("%-28s reports to %-15s five files %d/5   session title: CoS · %s" % (title, up, n, title))
+        print("%-28s reports to %-15s five files %d/5   session title: %s" % (title, up, n, C.COS_TITLE if title == "Chief of Staff" else title))
+    return 0
+
+
+def cmd_layout():
+    """Print the expected sidebar layout: the CoS title, the group, and every role title (pinned, grouped)."""
+    print("Chief of Staff title : %s" % C.COS_TITLE)
+    print("Sidebar group        : %s   (the Chief of Staff, every VP and COO: pinned, nested here)" % C.COS_GROUP)
+    print("Old titles still matched: %s; role titles with the prefix '%s'" % (", ".join(C.COS_TITLES_OLD), C.ROLE_PREFIX_OLD))
+    print("Roles (title: pinned, in the group; workers stay unpinned in their project groups):")
+    for title in ["Production VP", "Communication VP"] + [p + " COO" for p in C.PROJECTS]:
+        print("  " + title)
     return 0
 
 
@@ -735,6 +747,8 @@ def main(argv):
         return cmd_savings(rest)
     if cmd == "list-coos":
         return cmd_list_coos()
+    if cmd == "layout":
+        return cmd_layout()
     if cmd == "sidebar":
         return cmd_sidebar()
     if cmd == "status":

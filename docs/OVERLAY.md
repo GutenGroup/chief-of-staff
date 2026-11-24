@@ -1,8 +1,8 @@
 # Add your own rules
 
-The plugin gives every install the same Chief of Staff, Production VP, COOs and Helm. Your setup is not the same as
+The plugin gives every install the same Chief of Staff, Production VP, Communication VP, COOs and Helm. Your setup is not the same as
 anyone else's: your names, your tools, your folders, how you want to be asked. Those rules go in an **overlay**, a
-private folder of your own that the skills read on top of the package. By default it is yours alone, on your computer.
+private folder of your own that the Chief of Staff plugin reads on top of its own rules. By default it is yours alone, on your computer.
 
 ## Start one
 

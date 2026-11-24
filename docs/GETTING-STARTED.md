@@ -52,7 +52,7 @@ first, and you can always type your own answer.
 3. Recurring areas: IT, admin and finance, growth and marketing, personal. Each pick is a candidate COO.
 4. A recommended list (usually 2-4 COOs). Untick, rename or add.
 5. For each COO you keep: what winning looks like this month. It then writes the charter and goals, builds the five
-   training files and starts the COO session (`CoS · <Name> COO`).
+   training files and starts the COO session (`<Name> COO`).
 6. It arms its own 30-minute loop.
 
 From then on you talk to the Chief of Staff, or answer its dialogs in the panel. Run the interview again any time with

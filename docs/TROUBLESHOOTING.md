@@ -6,7 +6,7 @@
 | Nothing under `~/ChiefOfStaff` after install | the setup hook runs on the next session start | start a new session; check `ls ~/.claude/cos-config.yaml` |
 | `~/.claude/chief-of-staff exists and is not a link` | an older script install left a folder there | move it away, start a new session |
 | Workspace panel missing | panel plugin not installed, or app not restarted | `claude plugin install workspace-sidebar@chief-of-staff`, restart the app |
-| Panel shows "Chief of Staff not started yet" | no session titled exactly `Chief of Staff` has run a pass | title it exactly, send `/chief-of-staff` |
+| Panel shows "Chief of Staff not started yet" | no session titled `⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐` (or the older plain `Chief of Staff`) has run a pass | title it that way, send `/chief-of-staff` |
 | The brief is stale | the Chief of Staff loop expired (7 days) or the session stopped | send `/chief-of-staff` in that session; it re-arms its loop |
 | A COO stopped reporting | its loop expired or the session ended | the Chief of Staff resumes it after 4 h; or open it and send `/project-coo` |
 | Two COOs for one area | started twice by hand | stop one; the Chief of Staff flags duplicates hourly |

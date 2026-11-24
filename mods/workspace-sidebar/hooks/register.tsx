@@ -12,7 +12,10 @@ const LATEST = '__latest'
 const LATEST_COUNT = 6
 // The Chief of Staff session is found by title (it may carry stars or bold letters).
 const plainTitle = (t: string) => t.normalize('NFKD').replace(/[^A-Za-z ]/g, '').replace(/\s+/g, ' ').trim().toLowerCase()
-const isCos = (r: Row) => plainTitle(r.title) === 'chief of staff'
+// Title is "⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐" (NFKD turns the bold letters into 'chief of staff'); the older plain "Chief of Staff" and
+// "CoS · Chief of Staff" still match. A session id stored in cos-state.json (cosSessionId) matches too.
+let storedCosId = ''
+const isCos = (r: Row) => (!!storedCosId && r.id === storedCosId) || ['chief of staff', 'cos chief of staff'].includes(plainTitle(r.title))
 const cosRow = (rows: Row[]) => rows.filter(isCos).sort((a, b) => (a.at < b.at ? 1 : -1))[0]
 
 const snap = atom({ plugin: 'workspace-sidebar', key: 'snap' } as const, { rows: [], error: '', fetchedAt: 0, waiting: [], flagNote: '' } as Snapshot, {
@@ -274,7 +277,7 @@ async function drainRelay($: any) {
 // ── Chief of Staff ticker ────────────────────────────────────────────────────
 // The loop inside the CoS session dies when it closes or after 7 days. This is the
 // durable wake: every refresh, if the brief is older than COS_STALE_MS and the session
-// titled exactly "Chief of Staff" is idle, the first mod instance to write cos-tick.json
+// titled "⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐" (or the older plain title) is idle, the first mod instance to write cos-tick.json
 // (a 25-min guard stops repeats) sends it a one-line wake sentence. Never a bare
 // "/chief-of-staff": peer-bare-command-drop.sh blocks bare slash commands and shows you an error card.
 const COS_STALE_MS = 35 * 60000
@@ -294,7 +297,11 @@ async function tickCos($: any, rows: Row[], cos: Brief | null) {
     } catch {} // fail open: an unavailable guard must never silence the Chief
     // The CoS writes selfClearedAt right before clear_session self: wake it now, not at 35 min.
     let cleared = ''
-    try { cleared = String(JSON.parse(String(await $.fs.read(`${dir}/cos-state.json`))).selfClearedAt || '') } catch {}
+    try {
+      const st = JSON.parse(String(await $.fs.read(`${dir}/cos-state.json`)))
+      cleared = String(st.selfClearedAt || '')
+      storedCosId = String(st.cosSessionId || '')
+    } catch {}
     const fresh = !!cleared && (!cos || Date.parse(cleared) > Date.parse(cos.generatedAt))
     if (age < COS_STALE_MS && !fresh && !changed) return
     const target = cosRow(rows)

@@ -29,7 +29,7 @@ for f in PERSONA PLAYBOOK KNOWLEDGE LESSONS SCORECARD; do
 done
 check "VP persona title" 'grep -q "^# Production VP persona" "$HOME/ChiefOfStaff/Context/Production_VP/coo/PERSONA.md"'
 check "VP has a CHECK line" 'grep -q "^- CHECK text-question" "$HOME/ChiefOfStaff/Context/Production_VP/coo/LESSONS.md"'
-check "product COO reports to VP" 'grep -q "Production VP (\`CoS" "$HOME/ChiefOfStaff/Context/Acme/COO_CHARTER.md"'
+check "product COO reports to VP" 'grep -q "Production VP (\`Production VP" "$HOME/ChiefOfStaff/Context/Acme/COO_CHARTER.md"'
 check "marketplace json valid" 'python3 -c "import json;d=json.load(open(\"$REPO/mods/.claude-plugin/marketplace.json\"));assert d[\"plugins\"][0][\"name\"]==\"workspace-sidebar\""'
 
 cp "$HOME/.claude/settings.json" "$HOME/settings.first"
@@ -51,6 +51,9 @@ python3 "$REPO/bin/cos.py" add-project "IT" --reports-to cos >/tmp/cos-add.log 2
 check "add-project --reports-to cos" 'grep -q "Chief of Staff, directly" "$HOME/ChiefOfStaff/Context/IT/COO_CHARTER.md" && grep -q "  - IT" "$HOME/.claude/cos-config.yaml"'
 python3 "$REPO/bin/cos.py" list-coos >/tmp/cos-list.log 2>&1
 check "list-coos shows VP and lines" 'grep -q "^Production VP .*five files 5/5" /tmp/cos-list.log && grep -q "^IT COO .*reports to Chief of Staff" /tmp/cos-list.log && grep -q "^Acme COO .*reports to Production VP" /tmp/cos-list.log'
+check "list-coos titles carry no CoS prefix" '! grep -q "session title: CoS" /tmp/cos-list.log && grep -q "session title: Production VP" /tmp/cos-list.log'
+python3 "$REPO/bin/cos.py" layout >/tmp/cos-layout.log 2>&1
+check "layout prints star title and group" 'grep -q "⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐" /tmp/cos-layout.log && grep -q "⭐ Chief of Staff" /tmp/cos-layout.log'
 python3 "$REPO/bin/coo_lesson_check.py" Production_VP >/tmp/cos-vp.log 2>&1; rc=$?
 check "VP lesson check runs clean (no report yet = 2 allowed)" '[ $rc -eq 0 ] || [ $rc -eq 2 ]'
 

@@ -39,7 +39,8 @@ cos overlay init           your private overlay, ~/.claude/cos-overlay (never ov
 cos init                   create missing folders and starter files (never overwrites)
 cos add-project <Name> [--reports-to cos]   add a COO (default: reports to the Production VP)
 cos list-coos              the Production VP and every COO
-cos tick-check / tick-complete   the Chief of Staff's duplicate-pass guard (used by the skill)
+cos layout                 the expected sidebar layout: Chief of Staff title, group, every role title
+cos tick-check / tick-complete   the Chief of Staff's duplicate-pass guard (used by the Chief of Staff plugin)
 coo_onboard.py <Project>   build or refresh a COO's five files (never overwrites)
 coo_lesson_check.py --all  check every COO's reports against its CHECK rules
 coo_knowledge_test.py <Project> --real --write   monthly knowledge test (needs the claude CLI)

@@ -269,6 +269,33 @@ class CosTest(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(base, "coo", "PERSONA.md")))
         self.assertIn("Communication VP", self.run_cos("list-coos").stdout)
 
+    def test_cos_title_constant_is_exact(self):
+        sys.path.insert(0, os.path.join(HERE, "bin"))
+        import cosconfig
+        self.assertEqual(cosconfig.COS_TITLE, "\u2b50 \U0001d402\U0001d407\U0001d408\U0001d404\U0001d405 \U0001d40e\U0001d405 \U0001d412\U0001d413\U0001d400\U0001d405\U0001d405 \u2b50")
+        self.assertEqual(cosconfig.COS_TITLE, "⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐")
+        self.assertEqual(cosconfig.COS_GROUP, "⭐ Chief of Staff")
+        for t in (cosconfig.COS_TITLE, "Chief of Staff", "CoS · Chief of Staff"):
+            self.assertTrue(cosconfig.is_cos_title(t), t)
+        self.assertFalse(cosconfig.is_cos_title("Production VP"))
+        self.assertEqual(cosconfig.role_title("CoS · IT COO"), "IT COO")
+        self.assertEqual(cosconfig.role_title("IT COO"), "IT COO")
+
+    def test_layout_command(self):
+        out = self.run_cos("layout").stdout
+        self.assertIn("⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐", out)
+        self.assertIn("⭐ Chief of Staff", out)
+        for t in ("Production VP", "Communication VP", "Acme COO"):
+            self.assertIn("\n  " + t + "\n", out)
+        self.assertNotIn("CoS · Production", out)
+
+    def test_list_coos_titles_have_no_prefix(self):
+        self.run_cos("init")
+        out = self.run_cos("list-coos").stdout
+        self.assertIn("session title: Production VP", out)
+        self.assertIn("session title: ⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐", out)
+        self.assertNotIn("session title: CoS", out)
+
     def test_comms_send_authority_is_learned(self):
         self.assertEqual(self.run_comms("can-send", "Sam").stdout.strip(), "ASK")
         self.run_comms("allow", "Sam", "owner: send freely")

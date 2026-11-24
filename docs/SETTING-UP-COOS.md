@@ -74,7 +74,7 @@ cos add-project "IT" --reports-to cos          # a non-product COO (reports to t
    alone, and what must come to you.
 2. Edit `GOALS.md` with 3-5 goals, each with a measure, a target and a status line.
 3. Run `python3 ~/.claude/chief-of-staff/bin/coo_onboard.py <Name>`. This builds its five training files.
-4. Tell the Chief of Staff: "start the <Name> COO". It starts a session titled `CoS · <Name> COO` that loops every 3 hours.
+4. Tell the Chief of Staff: "start the <Name> COO". It starts a session titled `<Name> COO` that loops every 3 hours.
 
 `cos list-coos` shows the Production VP and every COO, whom each reports to, and whether its training files exist.
 

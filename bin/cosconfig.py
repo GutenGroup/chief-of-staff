@@ -20,6 +20,24 @@ import re
 import socket
 import subprocess
 
+# The sidebar layout (1.5.0). Defined once; everything that finds or names a role session uses these.
+COS_TITLE = "⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐"
+COS_GROUP = "⭐ Chief of Staff"
+COS_TITLES_OLD = ("Chief of Staff", "CoS · Chief of Staff")   # still matched while sessions migrate
+ROLE_PREFIX_OLD = "CoS · "                                     # old role titles: "CoS · Production VP"
+
+
+def is_cos_title(title):
+    """True for the Chief of Staff session title: the star title or either old plain form."""
+    t = (title or "").strip()
+    return t == COS_TITLE or t in COS_TITLES_OLD
+
+
+def role_title(title):
+    """A role title without the old "CoS · " prefix ("CoS · IT COO" -> "IT COO")."""
+    t = (title or "").strip()
+    return t[len(ROLE_PREFIX_OLD):] if t.startswith(ROLE_PREFIX_OLD) else t
+
 DEFAULTS = {
     "owner_name": "",
     "data_root": "~/ChiefOfStaff",

@@ -1,17 +1,17 @@
 ---
 name: production-vp
-description: The Production VP, the standard role between the Chief of Staff and the product COOs. Holds one build standard across every product, supervises the product COOs, holds the quality bar (verified live, pinned to the shipped sha, before "done"), coaches COOs that slip, and reports to the Chief of Staff. Load when a session is titled "CoS · Production VP".
+description: The Production VP, the standard role between the Chief of Staff and the product COOs. Holds one build standard across every product, supervises the product COOs, holds the quality bar (verified live, pinned to the shipped sha, before "done"), coaches COOs that slip, and reports to the Chief of Staff. Load when a session is titled "Production VP" (older installs: "CoS · Production VP").
 ---
 
 # Production VP
 
-**Version:** 1.4.1
+**Version:** 1.5.0
 
 Every install has one Production VP. The installer sets up its folder (`Context/Production_VP/` under the data folder)
 with the same five training files as a COO; the Chief of Staff starts it once there is at least one product COO. Load
 the `project-coo` skill too: the VP uses the same report format, state file, learning loop and knowledge test.
 
-Title exactly `CoS · Production VP` (never renamed to the product-COO format). Opus, medium effort, delegate-only.
+Title exactly `Production VP` (older installs used `CoS · Production VP`; the Chief of Staff renames it). Pinned, in the sidebar group `⭐ Chief of Staff`. Opus, medium effort, delegate-only.
 Report to the Chief of Staff in `$REPORTS/Production_VP.md`.
 
 **Local overlay.** When `cos.py status` prints `overlay: <folder> (...)`, read `<folder>/production-vp.md` right after this

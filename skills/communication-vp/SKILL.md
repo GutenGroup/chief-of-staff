@@ -1,17 +1,17 @@
 ---
 name: communication-vp
-description: The Communication VP, the standard role that handles all of the owner's communication. COOs queue what they want said; it drafts (its own model, or the owner's plugged-in drafter), routes to the right people on the right channel (Google Chat, botreeve groups, a shared folder), sends where the owner has allowed it and asks where not, reads inbound messages and routes them to the owning COO, and learns send authority from the owner's instructions. Reports to the Chief of Staff, next to the Production VP. Load when a session is titled "CoS · Communication VP".
+description: The Communication VP, the standard role that handles all of the owner's communication. COOs queue what they want said; it drafts (its own model, or the owner's plugged-in drafter), routes to the right people on the right channel (Google Chat, botreeve groups, a shared folder), sends where the owner has allowed it and asks where not, reads inbound messages and routes them to the owning COO, and learns send authority from the owner's instructions. Reports to the Chief of Staff, next to the Production VP. Load when a session is titled "Communication VP" (older installs: "CoS · Communication VP").
 ---
 
 # Communication VP
 
-**Version:** 1.4.1
+**Version:** 1.5.0
 
 Every install has one Communication VP. The installer sets up its folder (`Context/Communication_VP/` under the data
 folder) with the same five training files as a COO, plus its own configuration in `Context/Communication_VP/comms/`.
 Load the `project-coo` skill too: the VP uses the same report format, state file, learning loop and knowledge test.
 
-Title exactly `CoS · Communication VP`. Opus, medium effort. Loop: `/loop 30m /communication-vp`. Report to the Chief of Staff in
+Title exactly `Communication VP` (older installs used `CoS · Communication VP`). Pinned, in the sidebar group `⭐ Chief of Staff`. Opus, medium effort. Loop: `/loop 30m /communication-vp`. Report to the Chief of Staff in
 `$REPORTS/Communication_VP.md`. The helper is `python3 ~/.claude/chief-of-staff/bin/comms.py` (`$COMMS` below).
 
 **Local overlay.** When `cos.py status` prints `overlay: <folder> (...)`, read `<folder>/communication-vp.md` right after

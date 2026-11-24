@@ -4,15 +4,29 @@
 
 ```
 you
- └─ Chief of Staff          Opus, medium   session "Chief of Staff", loops every 30 min
+ └─ Chief of Staff          Opus, medium   session "⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐", loops every 30 min
      ├─ Production VP       Opus, medium   standard: supervises the product COOs
-     │   └─ product COOs    Sonnet, low    one per product, "CoS · <Name> COO"
+     │   └─ product COOs    Sonnet, low    one per product, "<Name> COO"
      │       └─ workers     Haiku/Sonnet   do the actual work
      ├─ Communication VP    Opus, medium   standard: every message in and out
      └─ other COOs          Sonnet, low    IT, admin, growth, personal
 ```
 
 Each level coordinates the one below and does not do its work. Workers do the work.
+
+## Sidebar layout
+
+The Chief of Staff, every VP and every COO are pinned and sit together in one sidebar group named `⭐ Chief of Staff`.
+The Chief of Staff's session title is `⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐`; role titles have no prefix (`Production VP`, `Communication VP`,
+`<Name> COO`). Workers are not pinned and stay in their project groups. `cos layout` prints the expected layout. On the
+first pass after updating to 1.5.0 the Chief of Staff renames old `CoS · ...` sessions, pins and groups every role once.
+
+## Sidebar layout
+
+The Chief of Staff, every VP and every COO are pinned and sit together in one sidebar group named `⭐ Chief of Staff`.
+The Chief of Staff's session title is `⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐`; role titles have no prefix (`Production VP`, `Communication VP`,
+`<Name> COO`). Workers are not pinned and stay in their project groups. `cos layout` prints the expected layout. On the
+first pass after updating to 1.5.0 the Chief of Staff renames old `CoS · ...` sessions, pins and groups every role once.
 
 ## The loops
 

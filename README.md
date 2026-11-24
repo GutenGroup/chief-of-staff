@@ -9,9 +9,9 @@ Built and tuned for a product studio running several products (a COO per product
 
 ```
 you
- └─ Chief of Staff          (Opus, medium)   one session titled "Chief of Staff", loops every 30 min
+ └─ Chief of Staff          (Opus, medium)   one session titled "⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐", loops every 30 min
      ├─ Production VP       (Opus, medium)   standard: supervises the product COOs
-     │   └─ product COOs    (Sonnet, low)    one per product or business line YOU choose, "CoS · <Name> COO"
+     │   └─ product COOs    (Sonnet, low)    one per product or business line YOU choose, "<Name> COO"
      │       └─ workers     (Haiku/Sonnet)   do the actual work, report to their COO
      ├─ Communication VP    (Opus, medium)   standard: every message in and out, for every role
      └─ other COOs          (Sonnet, low)    optional: IT, admin, growth, personal; report to the Chief of Staff
@@ -43,7 +43,7 @@ In Claude Code:
 ```
 
 Optional Workspace panel for the desktop app: `claude plugin install workspace-sidebar@chief-of-staff`.
-Then start a session titled **Chief of Staff** (Opus, medium) and send `/chief-of-staff`. It sets up your COOs with you.
+Then start a session titled **⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐** (Opus, medium) and send `/chief-of-staff`. It sets up your COOs with you.
 
 ## Documentation
 

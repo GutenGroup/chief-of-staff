@@ -84,6 +84,11 @@ upstream as a pull request instead. The overlay is personal; people and teams co
 Tell it, or tell the Chief of Staff about it. Corrections become lessons in that COO's `coo/LESSONS.md` the same day, and
 repeated ones become rules and machine checks.
 
+### Why is my Chief of Staff pinned with stars, and what is the "⭐ Chief of Staff" group?
+That is the standard sidebar layout since 1.5.0: the Chief of Staff, every VP and every COO are pinned and grouped
+together; workers stay unpinned in their project groups. Role titles have no "CoS · " prefix. After an update the Chief
+of Staff fixes old titles, pins and groups once on its next pass. `cos layout` prints what it expects.
+
 ### Can I rename or restructure COOs later?
 Yes. Merge two by moving one's goals into the other's `GOALS.md` and removing the first; split one with `/add-coo`. The
 Chief of Staff keeps one active COO per area.

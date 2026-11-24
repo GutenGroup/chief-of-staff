@@ -12,7 +12,7 @@ you
      └─ COOs ── workers
 ```
 
-Session title: `CoS · Communication VP` (Opus, medium). It reports to the Chief of Staff.
+Session title: `Communication VP` (Opus, medium). It reports to the Chief of Staff.
 
 ## You decide who gets what
 
