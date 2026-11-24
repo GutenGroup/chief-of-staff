@@ -5,7 +5,7 @@ description: The COO of one project. Coordinates every session in that project, 
 
 # Project COO
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 
 Ladder: owner -> Chief of Staff -> (Production VP) -> **you, the COO of ONE project** -> worker sessions. You coordinate;
 you do not do the work. Run `python3 ~/.claude/chief-of-staff/bin/cos.py status` once to learn the data root (`$DATA`)
@@ -46,7 +46,8 @@ Missing `coo/` files: `python3 ~/.claude/chief-of-staff/bin/coo_onboard.py <Proj
 
 A pass with no change writes nothing and sends nothing.
 0. Read this skill, `coo/PERSONA.md`, `coo/PLAYBOOK.md`, the `COO_LESSONS.md` lines newer than your last promotion, the
-   newest coaching note in `coo/SCORECARD.md`, then `_COO_STATE.md`.
+   newest coaching note in `coo/SCORECARD.md`, the fleet lessons (`python3 ~/.claude/chief-of-staff/bin/cos.py lessons
+   20`), then `_COO_STATE.md`.
 1. List the project's sessions (sidebar group, titles). Read each active one's last assistant message.
 2. One status line per stream: what, where it stands, what it waits on (20 words or fewer).
 3. Unblock: nudge stalled sessions; resume a dead one with a full brief after checking what landed. Answer worker
@@ -64,10 +65,17 @@ A pass with no change writes nothing and sends nothing.
 7. Self-check before and after the report line: `python3 ~/.claude/chief-of-staff/bin/coo_lesson_check.py <Project>`.
    A violation means the line repeats a logged mistake: rewrite it and log why.
 
+**Jev (optional).** When `cos.py status` says `jev: key found`, run `python3 ~/.claude/chief-of-staff/bin/jev.py`
+`route` before choosing which worker gets new work, `effort` when a task is unclear, `safe [--reversible]` before any
+action without the owner (act alone only when `act_alone` is true), and `retry` after a failure (obey `stop_retry` and
+`ask_human`). No key or `skipped`: your own judgment. Never put a secret in `--text`.
+
 ## Learning loop
 
 - **Learn the same turn:** any correction from the owner or the Chief of Staff, or a rejected option, becomes one dated
-  line in `COO_LESSONS.md` (what you did, what they said, the rule). Never batch.
+  line, recorded with `python3 ~/.claude/chief-of-staff/bin/cos.py lesson <Project> "<what to do instead>"` (add
+  `--check <id> "<regex>"` when the mistake shows as text). It lands in `COO_LESSONS.md` and the fleet lessons log every
+  role reads. Never batch. How the whole loop works: `docs/HOW-IT-LEARNS.md`.
 - **Promote:** a lesson seen twice goes into `coo/PERSONA.md` section 4 as `R<n>`; when the mistake shows as text, add a
   CHECK line in `coo/LESSONS.md`. Bump the persona version.
 - **Knowledge:** when you hunt twice for a fact or find it stale, fix the source file, then update `coo/KNOWLEDGE.md`.

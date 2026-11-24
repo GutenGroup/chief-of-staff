@@ -5,6 +5,8 @@ comes standard. You choose your own **COOs**, one per product or area of your wo
 through that. The COOs hand the real work to cheap **worker** sessions.
 You only see a short brief and the decisions that need you, each one a click-through dialog with a recommendation.
 
+Built and tuned for a product studio running several products (a COO per product, a Production VP across them), and it works for anyone: one business, a solo founder, side projects or personal areas. The COO setup interview adapts to you.
+
 ```
 you
  └─ Chief of Staff          (Opus, medium)   one session titled "Chief of Staff", loops every 30 min
@@ -35,7 +37,8 @@ you
 In Claude Code:
 
 ```
-/plugin install chief-of-staff --marketplace GutenGroup/chief-of-staff
+/plugin marketplace add GutenGroup/chief-of-staff
+/plugin install chief-of-staff@chief-of-staff
 ```
 
 Optional Workspace panel for the desktop app: `claude plugin install workspace-sidebar@chief-of-staff`.
@@ -45,7 +48,8 @@ Then start a session titled **Chief of Staff** (Opus, medium) and send `/chief-o
 
 - **Docs site:** https://guten.group/ai/chief-of-staff/
 - **In the repo:** [Getting started](docs/GETTING-STARTED.md) · [Setting up COOs](docs/SETTING-UP-COOS.md) ·
-  [How it works](docs/HOW-IT-WORKS.md) · [Models and costs](docs/MODELS-AND-COSTS.md) · [FAQ](docs/FAQ.md) ·
+  [How it works](docs/HOW-IT-WORKS.md) · [Operating](docs/OPERATING.md) · [Production VP](docs/PRODUCTION-VP.md) · [How it learns](docs/HOW-IT-LEARNS.md) ·
+  [Models and costs](docs/MODELS-AND-COSTS.md) · [With and without Jev](docs/JEV.md) · [FAQ](docs/FAQ.md) ·
   [Troubleshooting](docs/TROUBLESHOOTING.md) · [Reference](docs/REFERENCE.md)
 - **Inside Claude Code:** `/cos-help <your question>`
 

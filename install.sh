@@ -134,7 +134,29 @@ else:
 PY
 fi
 
-# 8. Optional background job runner (fleet member).
+# 8. Training schedule: once a day `cos learn-due` runs whatever is due (weekly review on Sunday, monthly knowledge
+#    test). Idempotent; the Chief of Staff also calls it on every pass. COS_NO_LAUNCHD=1 skips the scheduler.
+if [ "${COS_NO_LAUNCHD:-0}" != "1" ]; then
+  if [ "$(uname -s)" = "Darwin" ]; then
+    lplist="$HOME/Library/LaunchAgents/com.chiefofstaff.learning.plist"
+    mkdir -p "$(dirname "$lplist")" "$HOME/Library/Logs"
+    sed "s|__HOME__|$HOME|g" "$REPO/launchd/com.chiefofstaff.learning.plist" > "$lplist.new"
+    if ! cmp -s "$lplist.new" "$lplist"; then
+      mv "$lplist.new" "$lplist"
+      launchctl bootout "gui/$(id -u)/com.chiefofstaff.learning" 2>/dev/null || true
+      launchctl bootstrap "gui/$(id -u)" "$lplist" 2>/dev/null || true
+      say "training schedule: loaded (daily 18:05, runs what is due)"
+    else
+      rm -f "$lplist.new"; say "training schedule: already loaded"
+    fi
+  elif command -v crontab >/dev/null 2>&1; then
+    line="5 18 * * * python3 $REPO/bin/cos.py learn-due"
+    if crontab -l 2>/dev/null | grep -qF "cos.py learn-due"; then say "training schedule: already in crontab"
+    else (crontab -l 2>/dev/null; echo "$line") | crontab - && say "training schedule: added to crontab (daily 18:05)"; fi
+  fi
+fi
+
+# 9. Optional background job runner (fleet member).
 if [ "$RUNNER" -eq 1 ]; then
   if [ "$(uname -s)" = "Darwin" ]; then
     plist="$HOME/Library/LaunchAgents/com.chiefofstaff.job-runner.plist"

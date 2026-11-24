@@ -41,7 +41,8 @@ Every role can be cleared at any moment without losing anything, because its mem
 
 When a COO's context passes its limit (150k tokens, 200k for the VP) the Chief of Staff asks it to write its state file,
 then clears it in place. The session keeps its id, title and workers, re-reads its files and carries on. The Chief of
-Staff clears itself the same way at 150k.
+Staff clears itself the same way at 150k. Limits, the full sequence and why clearing beats compaction:
+[Operating](OPERATING.md).
 
 ## Dialogs, never questions in text
 

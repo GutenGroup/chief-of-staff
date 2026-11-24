@@ -19,3 +19,12 @@ job_repo_roots: []        # fleet mode only: folders a queued job may work in, e
                           # anything that can write a machine's inbox can queue work on it.
 
 claude_bin: claude        # the Claude Code CLI used by job runners and the knowledge test
+
+# When each role clears its context (tokens). State lives in files, so a clear loses nothing; clearing far below the
+# model's maximum keeps answers sharp and cost low. See docs/OPERATING.md.
+clear_at_cos: 150000
+clear_at_vp: 200000
+clear_at_coo: 150000
+
+# Optional Jev (TypeSafe) decisions: set TYPESAFE_API_KEY in your environment or in ~/.claude/typesafe-api.env.
+# Never put the key in this file. See docs/JEV.md.

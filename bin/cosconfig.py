@@ -28,6 +28,9 @@ DEFAULTS = {
     "lead_machine": "",
     "projects": [],
     "claude_bin": "claude",
+    "clear_at_cos": 150000,
+    "clear_at_vp": 200000,
+    "clear_at_coo": 150000,
 }
 
 
@@ -112,3 +115,13 @@ OWNER = CONFIG.get("owner_name") or "you"
 PROJECTS = [str(p) for p in CONFIG.get("projects") or []]
 MODE = CONFIG.get("fleet_mode") or "single"
 CLAUDE_BIN = CONFIG.get("claude_bin") or "claude"
+
+
+def _int(name):
+    try:
+        return max(50000, int(CONFIG.get(name) or DEFAULTS[name]))
+    except (TypeError, ValueError):
+        return DEFAULTS[name]
+
+
+CLEAR_AT = {"cos": _int("clear_at_cos"), "vp": _int("clear_at_vp"), "coo": _int("clear_at_coo")}

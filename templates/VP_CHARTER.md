@@ -17,6 +17,11 @@ Written {{DATE}}. Ships standard with every install. The owner may edit it; the 
   irreversible that affects people outside the team, credentials.
 - Delegate-only: anything over two tool calls goes to a worker on a cheap model. The VP judges, specs and verifies.
 
+## Quality bar
+- Done = verified live on production, pinned to the shipped sha, with a check path the owner can open without a login.
+- Ship on green: finished work with green checks goes to production by the repo's real deploy path, then is verified.
+- Each product keeps one permanent QA account in a marked test tenant; its credentials live only in the secrets store.
+
 ## Decisions closed
 - (dated lines, newest first: `- YYYY-MM-DD: what was decided`)
 

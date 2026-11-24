@@ -10,6 +10,16 @@ Setup and housekeeping
   cos.py sidebar                    write ~/.claude/needs-input/sidebar.json for the Workspace panel
   cos.py status                     print mode, machine, folders, projects and queue counts
 
+Learning (every role: the Chief of Staff, the Production VP, each COO)
+  cos.py lesson <Role> "<text>" [--check <id> "<regex>"]
+                                    record a correction the same turn: a dated lesson in Context/<Role>/COO_LESSONS.md,
+                                    a line in <fleet>/lessons.log, and (with --check) a machine-checked CHECK line
+  cos.py lessons [N]                the last N lines (default 20) of the fleet lessons log; every role reads it at start
+  cos.py learn-due [--now]          run what the training schedule says is due: the weekly review (Sunday, or a missed
+                                    week; --now: this week's review today) and the monthly real knowledge test; idempotent, safe every pass
+  cos.py savings add <category> <predicted> <measured> [note]
+  cos.py savings review             the self-learning cost review: predicted vs measured savings per category
+
 Chief of Staff tick guard (keeps the 30-minute loop and the sidebar ticker from doing double work)
   cos.py tick-check                 SKIP: a full pass finished < 5 min ago and nothing changed; RUN: otherwise
   cos.py tick-peek                  same answer, records nothing (used by the Workspace sidebar)
@@ -98,7 +108,9 @@ def project_folder(name):
 
 
 VP_FOLDER = "Production_VP"
-REPORTS_TO = {"vp": "The Production VP (`CoS · Production VP`): build and board status. Needs-owner items go to the "
+COS_FOLDER = "Chief_of_Staff"
+REPORTS_TO = {"owner": "The owner, directly.",
+              "vp": "The Production VP (`CoS · Production VP`): build and board status. Needs-owner items go to the "
                     "Chief of Staff.",
               "cos": "The Chief of Staff, directly (not a product line)."}
 
@@ -124,9 +136,11 @@ def cmd_init():
         made.append("coo-reports/README.md")
     if write_new(os.path.join(C.ROOT, "DECISIONS.md"), template("DECISIONS.md")):
         made.append("DECISIONS.md")
+    made += init_project("Chief of Staff", reports_to="owner", charter="COS_CHARTER.md")
     made += init_project("Production VP", charter="VP_CHARTER.md")
     for p in C.PROJECTS:
         made += init_project(p)
+    onboard(COS_FOLDER)
     onboard(VP_FOLDER)
     write_sidebar()
     print("data root: %s\nfleet dir: %s\ncreated: %d file(s)%s" % (C.ROOT, C.FLEET, len(made), "".join("\n  " + m for m in made)))
@@ -140,7 +154,7 @@ def onboard(folder):
 
 
 def cmd_list_coos():
-    rows = [("Production VP", VP_FOLDER, "Chief of Staff")]
+    rows = [("Chief of Staff", COS_FOLDER, "owner"), ("Production VP", VP_FOLDER, "Chief of Staff")]
     for p in C.PROJECTS:
         ch = os.path.join(C.ROOT, "Context", project_folder(p), "COO_CHARTER.md")
         txt = open(ch, encoding="utf-8").read() if os.path.exists(ch) else ""
@@ -150,6 +164,146 @@ def cmd_list_coos():
         n = len([f for f in ("PERSONA", "PLAYBOOK", "KNOWLEDGE", "LESSONS", "SCORECARD") if os.path.exists(os.path.join(coo, f + ".md"))])
         print("%-28s reports to %-15s five files %d/5   session title: CoS · %s" % (title, up, n, title))
     return 0
+
+
+# ---------------------------------------------------------------- learning
+def role_folder(role):
+    f = project_folder(role)
+    aliases = {"CoS": COS_FOLDER, "Chief_of_Staff": COS_FOLDER, "VP": VP_FOLDER, "Production_VP": VP_FOLDER}
+    return aliases.get(f, f)
+
+
+def cmd_lesson(role, text, check=None):
+    text = " ".join(text.split())
+    if not role or not text:
+        print('usage: cos lesson <Role> "<what went wrong -> what to do instead>" [--check <id> "<regex>"]')
+        return 2
+    folder = role_folder(role)
+    d = os.path.join(C.ROOT, "Context", folder)
+    if not os.path.isdir(d):
+        print("no such role folder: Context/%s (run `cos init` or `cos add-project`)" % folder)
+        return 2
+    if check:
+        cid, rx = check
+        if not re.fullmatch(r"[a-z0-9][a-z0-9.-]*", cid or ""):
+            print("check id must be kebab-case: %r" % cid)
+            return 2
+        try:
+            re.compile(rx)
+        except re.error as e:
+            print("bad regex: %s" % e)
+            return 2
+        if "\n" in rx:
+            print("regex must be one line")
+            return 2
+    day = now()[:10]
+    path = os.path.join(d, "COO_LESSONS.md")
+    old = open(path, encoding="utf-8").read() if os.path.exists(path) else "# %s lessons\n" % folder
+    seen = sum(1 for l in old.splitlines() if l.split(": ", 1)[-1].strip().lower() == text.lower())
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(("" if old.endswith("\n") else "\n") + "- %s: %s\n" % (day, text))
+    os.makedirs(C.FLEET, exist_ok=True)
+    with open(os.path.join(C.FLEET, "lessons.log"), "a", encoding="utf-8") as f:
+        f.write("%s %s %s\n" % (now(), folder, text))
+    out = ["lesson recorded: Context/%s/COO_LESSONS.md" % folder]
+    if check:
+        lp = os.path.join(d, "coo", "LESSONS.md")
+        if not os.path.exists(lp):
+            print("no coo/LESSONS.md for %s: run coo_onboard.py %s first" % (folder, folder))
+            return 2
+        body = open(lp, encoding="utf-8").read()
+        if re.search(r"^\s*-\s*CHECK\s+%s\s*\|" % re.escape(cid), body, re.M):
+            out.append("CHECK %s already exists, not added" % cid)
+        else:
+            line = "- CHECK %s | since %s | forbid /%s/ | %s\n" % (cid, now(), rx, text)
+            with open(lp, "a", encoding="utf-8") as f:
+                f.write(("" if body.endswith("\n") else "\n") + line)
+            out.append("CHECK %s added to Context/%s/coo/LESSONS.md" % (cid, folder))
+    if seen >= 1:
+        out.append("seen %d times: promote it to a rule in coo/PERSONA.md section 4 now" % (seen + 1))
+    print("\n".join(out))
+    return 0
+
+
+def cmd_lessons(n=20):
+    p = os.path.join(C.FLEET, "lessons.log")
+    lines = open(p, encoding="utf-8").read().splitlines() if os.path.exists(p) else []
+    print("\n".join(lines[-n:]) if lines else "no lessons yet")
+    return 0
+
+
+def cmd_learn_due(force=False):
+    here = os.path.dirname(os.path.realpath(__file__))
+    today = datetime.date.today()
+    st = os.path.join(C.FLEET, "status")
+    os.makedirs(st, exist_ok=True)
+    did = []
+    y, w, wd = today.isocalendar()
+    week = "%d-W%02d" % (y, w)
+    ly, lw, _ = (today - datetime.timedelta(days=7)).isocalendar()
+    last = "%d-W%02d" % (ly, lw)
+    tr = lambda wk: os.path.join(C.FLEET, "coo-reports", "_coo-training-%s.md" % wk)
+    first_run = not glob.glob(os.path.join(C.FLEET, "coo-reports", "_coo-training-*.md"))
+    target = week if (wd == 7 or force) else (last if not first_run else None)
+    if target and not os.path.exists(tr(target)):
+        r = subprocess.run([sys.executable, os.path.join(here, "coo_weekly_review.py"), "--week", target],
+                           capture_output=True, text=True)
+        did.append("weekly review %s: written to coo-reports/_coo-training-%s.md (rc %d)" % (target, target, r.returncode))
+    period = today.strftime("%Y-%m")
+    stamp = os.path.join(st, "knowledge-test-%s.started" % period)
+    if not os.path.exists(stamp) and os.environ.get("COS_NO_KNOWLEDGE_TEST") != "1":
+        log = os.path.join(st, "knowledge-test-%s.log" % period)
+        with open(log, "a") as lf:
+            subprocess.Popen([sys.executable, os.path.join(here, "coo_knowledge_test.py"), "--all", "--real",
+                              "--period", period, "--write"], stdout=lf, stderr=subprocess.STDOUT,
+                             stdin=subprocess.DEVNULL, start_new_session=True)
+        atomic_write(stamp, now() + "\n")
+        did.append("monthly knowledge test %s: started in the background (log: status/knowledge-test-%s.log)" % (period, period))
+    kt = ("off (COS_NO_KNOWLEDGE_TEST=1)" if os.environ.get("COS_NO_KNOWLEDGE_TEST") == "1" else
+          "started" if os.path.exists(stamp) else "not started")
+    print("\n".join(did) if did else "nothing due (weekly review %s %s; knowledge test %s %s)" % (
+        week, "done" if os.path.exists(tr(week)) else "due on Sunday", period, kt))
+    return 0
+
+
+def cmd_savings(rest):
+    p = os.path.join(C.FLEET, "cos-savings.jsonl")
+    if rest[:1] == ["add"] and len(rest) >= 4:
+        try:
+            pred, meas = float(rest[2]), float(rest[3])
+        except ValueError:
+            print("predicted and measured must be numbers (same unit, e.g. tokens or dollars per week)")
+            return 2
+        os.makedirs(C.FLEET, exist_ok=True)
+        with open(p, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"ts": now(), "category": rest[1], "predicted": pred, "measured": meas,
+                                "note": " ".join(rest[4:])}) + "\n")
+        print("recorded %s: predicted %g, measured %g" % (rest[1], pred, meas))
+        return 0
+    if rest[:1] == ["review"]:
+        rows = []
+        if os.path.exists(p):
+            for l in open(p, encoding="utf-8"):
+                try:
+                    rows.append(json.loads(l))
+                except ValueError:
+                    pass
+        if not rows:
+            print("no savings recorded yet")
+            return 0
+        cats = {}
+        for r in rows:
+            c = cats.setdefault(r["category"], [0.0, 0.0, 0])
+            c[0] += r["predicted"]; c[1] += r["measured"]; c[2] += 1
+        print("| category | entries | predicted | measured | factor | verdict |\n|---|---|---|---|---|---|")
+        for k, (pr, me, n) in sorted(cats.items()):
+            f = me / pr if pr else 0.0
+            v = ("disproved: delete the lesson behind it" if n >= 2 and f < 0.25 else
+                 "holds" if f >= 0.75 else "partial: scale future predictions by the factor")
+            print("| %s | %d | %g | %g | %.2f | %s |" % (k, n, pr, me, f, v))
+        return 0
+    print("usage: cos savings add <category> <predicted> <measured> [note] | cos savings review")
+    return 2
 
 
 def write_sidebar(projects=None):
@@ -208,11 +362,23 @@ def queue_counts():
     return out
 
 
+def jev_key_present():
+    if os.environ.get("TYPESAFE_API_KEY", "").strip():
+        return True
+    try:
+        with open(os.path.expanduser("~/.claude/typesafe-api.env")) as f:
+            return any(l.startswith("TYPESAFE_API_KEY=") and l.split("=", 1)[1].strip().strip("\"'") for l in f)
+    except OSError:
+        return False
+
+
 def cmd_status():
     q = queue_counts()
     print("mode: %s\nmachine: %s\nowner: %s\ndata root: %s\nfleet dir: %s\nprojects: %s\njobs: %s" % (
         C.MODE, C.MACHINE, C.OWNER, C.ROOT, C.FLEET, ", ".join(C.PROJECTS) or "(none)",
         ", ".join("%s %d" % kv for kv in q.items())))
+    print("clear at: Chief of Staff %(cos)d, Production VP %(vp)d, COOs %(coo)d tokens" % C.CLEAR_AT)
+    print("jev: %s" % ("key found (bin/jev.py)" if jev_key_present() else "no key: roles use their own judgment (docs/JEV.md)"))
     if C.MODE != "single":
         atomic_write(os.path.join(C.FLEET, "status", "chief-of-staff-%s.json" % C.MACHINE),
                      json.dumps({"machine": C.MACHINE, "at": now(), "mode": C.MODE, "queue": q}, indent=1))
@@ -483,6 +649,19 @@ def main(argv):
             rt = rest[i + 1] if i + 1 < len(rest) else ""
             rest = rest[:i] + rest[i + 2:]
         return cmd_add_project(" ".join(rest), rt)
+    if cmd == "lesson":
+        check = None
+        if "--check" in rest:
+            i = rest.index("--check")
+            check = tuple(rest[i + 1:i + 3]) if len(rest) >= i + 3 else ("", "")
+            rest = rest[:i] + rest[i + 3:]
+        return cmd_lesson(rest[0] if rest else "", " ".join(rest[1:]), check)
+    if cmd == "lessons":
+        return cmd_lessons(int(rest[0]) if rest and rest[0].isdigit() else 20)
+    if cmd == "learn-due":
+        return cmd_learn_due(force="--now" in rest)
+    if cmd == "savings":
+        return cmd_savings(rest)
     if cmd == "list-coos":
         return cmd_list_coos()
     if cmd == "sidebar":

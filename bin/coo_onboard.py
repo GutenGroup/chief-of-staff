@@ -317,7 +317,9 @@ def lessons(d):
             f"Raw dated correction log: ../COO_LESSONS.md. Promoted rules: PERSONA section 4. Below: the machine-checked rules.\n\n"
             "## CHECK lines (format: - CHECK <id> | since <date> | forbid /<regex>/ | <why>)\n"
             f"- CHECK text-question | since {now().strftime('%Y-%m-%d')} | forbid /(?i)\\b(want me to|shall I|should I|let me know if)\\b/ | questions to the owner go up as needs-owner lines with options, never as text\n"
-            "(the standard starting check; add a line each time a correction is visible as text in a report entry, never invent one for a rule you were not corrected on)\n")
+            + (f"- CHECK no-handtyped-timestamp | since {now().strftime('%Y-%m-%d')} | forbid /(?<!\\d)\\d{{2}}:[xX?]{{2}}(?!\\w)/ | timestamps come from `date -u`; a placeholder time like 14:xx was typed by hand\n"
+               if d["name"] == "Production_VP" else "")
+            + "(the standard starting check; add a line each time a correction is visible as text in a report entry, never invent one for a rule you were not corrected on)\n")
 
 
 def scorecard(d):

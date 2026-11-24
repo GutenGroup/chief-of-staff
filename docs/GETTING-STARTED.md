@@ -9,7 +9,8 @@ You need the Claude desktop app with Claude Code (or Claude Code in a terminal) 
 In Claude Code:
 
 ```
-/plugin install chief-of-staff --marketplace GutenGroup/chief-of-staff
+/plugin marketplace add GutenGroup/chief-of-staff
+/plugin install chief-of-staff@chief-of-staff
 ```
 
 From a terminal instead:

@@ -19,7 +19,7 @@ little to do and costs almost nothing.
 
 ### Do I have to have a Production VP?
 It is always set up, but it only runs once you have at least one product COO. If all your COOs are non-product areas,
-it never starts.
+it never starts. More: [The Production VP](PRODUCTION-VP.md).
 
 ### How do I add a COO?
 Tell the Chief of Staff "add a COO", or run `/add-coo <name>`. It asks two or three dialog questions, writes the
@@ -62,6 +62,12 @@ in a synced folder if you want it on several machines.
 The Chief of Staff has the COO write its state file, then clears it in place: same session, same title, same workers. It
 re-reads its files and carries on. See [How it works](HOW-IT-WORKS.md).
 
+### Does it actually learn?
+Yes, in files, not in memory. Every correction becomes a dated lesson the same turn, a visible mistake becomes a check
+that runs every pass, and a weekly scorecard counts repeated corrections per role (going down is the goal). A monthly
+knowledge test grades each role on its own files. Works for the Chief of Staff, the Production VP and every COO. More:
+[How it learns](HOW-IT-LEARNS.md).
+
 ### How do I teach a COO something?
 Tell it, or tell the Chief of Staff about it. Corrections become lessons in that COO's `coo/LESSONS.md` the same day, and
 repeated ones become rules and machine checks.
@@ -77,6 +83,16 @@ time with `/chief-of-staff`.
 ### How do I uninstall?
 `claude plugin uninstall chief-of-staff@chief-of-staff` (and `workspace-sidebar@chief-of-staff`). Your data folder and
 config stay; delete `~/ChiefOfStaff`, `~/.claude/cos-config.yaml` and `~/.claude/needs-input` if you want them gone.
+
+### What is Jev, and do I need it?
+An optional decision model from TypeSafe. With a key, the roles ask it who should get a task, how much effort it needs,
+whether an action is safe to take alone, and whether to retry after a failure. Without a key everything still works and
+the roles use their own judgment. We recommend connecting one: see [With and without Jev](JEV.md).
+
+### When do sessions clear, and can I change it?
+The Chief of Staff and COOs clear at 150,000 tokens, the Production VP at 200,000, far below the model's maximum, to
+keep cost and quality in check. Change `clear_at_cos`, `clear_at_vp` and `clear_at_coo` in `~/.claude/cos-config.yaml`.
+See [Operating](OPERATING.md).
 
 ### Where do I get help or report a bug?
 Ask inside Claude Code with `/cos-help <question>`, read [Troubleshooting](TROUBLESHOOTING.md), or open an issue on

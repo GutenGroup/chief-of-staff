@@ -1,0 +1,6 @@
+# Exact strings allowed in the public release (publisher identity). Removed from a line before the deny-list re-tests it.
+Guten Group
+GutenGroup/chief-of-staff
+gutengroup.github.io/chief-of-staff
+guten.group/ai/chief-of-staff
+noreply@guten.group

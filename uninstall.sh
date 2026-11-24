@@ -14,6 +14,15 @@ done
 [ -L "$CLAUDE_DIR/chief-of-staff" ] && rm "$CLAUDE_DIR/chief-of-staff" && echo "removed ~/.claude/chief-of-staff"
 [ -L "$HOME/.local/bin/cos" ] && [ "$(readlink "$HOME/.local/bin/cos")" = "$REPO/bin/cos.py" ] && rm "$HOME/.local/bin/cos"
 
+lplist="$HOME/Library/LaunchAgents/com.chiefofstaff.learning.plist"
+if [ -f "$lplist" ]; then
+  launchctl bootout "gui/$(id -u)/com.chiefofstaff.learning" 2>/dev/null || true
+  rm "$lplist"; echo "removed training schedule"
+fi
+if command -v crontab >/dev/null 2>&1 && crontab -l 2>/dev/null | grep -qF "cos.py learn-due"; then
+  crontab -l 2>/dev/null | grep -vF "cos.py learn-due" | crontab - && echo "removed training schedule from crontab"
+fi
+
 plist="$HOME/Library/LaunchAgents/com.chiefofstaff.job-runner.plist"
 if [ -f "$plist" ]; then
   launchctl bootout "gui/$(id -u)/com.chiefofstaff.job-runner" 2>/dev/null || true

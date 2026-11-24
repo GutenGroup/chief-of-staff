@@ -179,6 +179,39 @@ class CosTest(unittest.TestCase):
         self.assertEqual(fb["machines"][0]["machine"], "box1")
         self.assertEqual(fb["needsOwner"][0]["machine"], "box1")
 
+    def run_jev(self, *args):
+        env = dict(os.environ, HOME=self.home)
+        env.pop("TYPESAFE_API_KEY", None)
+        jev = os.path.join(os.path.dirname(COS), "jev.py")
+        return subprocess.run([sys.executable, jev] + list(args), capture_output=True, text=True, env=env)
+
+    def test_jev_without_key_is_skipped(self):
+        for cmd in (["route", "--text", "t", "--options", "A,B"], ["effort", "--text", "t"],
+                    ["safe", "--text", "t", "--reversible"], ["retry", "--text", "t"]):
+            r = self.run_jev(*cmd)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertEqual(json.loads(r.stdout), {"skipped": "no key"})
+        self.assertIn("no key", self.run_cos("status").stdout)
+
+    def test_jev_usage_errors(self):
+        self.assertEqual(self.run_jev().returncode, 2)
+        self.assertEqual(self.run_jev("safe").returncode, 2)
+        self.assertEqual(self.run_jev("route", "--text", "t", "--options", "A").returncode, 2)
+
+    def test_clear_thresholds_from_config(self):
+        with open(self.cfg, "a") as f:
+            f.write("clear_at_vp: 300000\nclear_at_coo: 1000\n")
+        out = self.run_cos("status").stdout
+        self.assertIn("Production VP 300000", out)
+        self.assertIn("COOs 50000", out)  # floor
+        self.assertIn("Chief of Staff 150000", out)
+
+    def test_vp_seeded_with_checks(self):
+        self.run_cos("init")
+        les = open(self.p("data", "Context", "Production_VP", "coo", "LESSONS.md")).read()
+        self.assertIn("CHECK text-question", les)
+        self.assertIn("CHECK no-handtyped-timestamp", les)
+
 
 if __name__ == "__main__":
     unittest.main()

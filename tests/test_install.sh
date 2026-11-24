@@ -4,6 +4,7 @@
 set -uo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 export HOME="$(mktemp -d)"
+export COS_NO_LAUNCHD=1 COS_NO_KNOWLEDGE_TEST=1   # never load a real LaunchAgent or call claude from a test
 FIRST_HOME="$HOME"
 trap 'rm -rf "$FIRST_HOME" "$HOME"' EXIT
 PASS=0; FAIL=0
@@ -68,6 +69,23 @@ check "knowledge pre-check runs (exit 0 or 1)" '[ $rc -le 1 ]'
 python3 "$REPO/bin/coo_weekly_review.py" --dry-run >/tmp/cos-weekly.log 2>&1; rc=$?
 check "weekly review dry run (exit 0 or 1)" '[ $rc -le 1 ]'
 
+# Learning loop: a planted correction becomes a lesson and a CHECK line; the weekly review writes a scorecard row.
+python3 "$REPO/bin/cos.py" lesson CoS "asked the owner which COO gets a task -> route it yourself" --check no-route-ask "(?i)which COO should" >/tmp/cos-learn.log 2>&1
+check "CoS has five files" '[ -f "$HOME/ChiefOfStaff/Context/Chief_of_Staff/coo/PERSONA.md" ] && [ -f "$HOME/ChiefOfStaff/Context/Chief_of_Staff/coo/SCORECARD.md" ]'
+check "correction became a dated lesson" 'grep -q "route it yourself" "$HOME/ChiefOfStaff/Context/Chief_of_Staff/COO_LESSONS.md"'
+check "correction became a CHECK line" 'grep -q "CHECK no-route-ask" "$HOME/ChiefOfStaff/Context/Chief_of_Staff/coo/LESSONS.md"'
+check "fleet lessons log" 'grep -q "Chief_of_Staff" "$HOME/ChiefOfStaff/fleet/lessons.log"'
+TOMORROW=$(python3 -c 'import datetime;print((datetime.date.today()+datetime.timedelta(days=1)).isoformat())')
+printf -- "- ${TOMORROW}T10:00Z | status: x | done: y | next: z | needs-owner: which COO should take it?\n" >> "$HOME/ChiefOfStaff/fleet/coo-reports/Chief_of_Staff.md"
+python3 "$REPO/bin/coo_lesson_check.py" Chief_of_Staff >/tmp/cos-learn2.log 2>&1
+check "the CHECK catches a repeat" 'grep -q "no-route-ask" /tmp/cos-learn2.log'
+python3 "$REPO/bin/cos.py" learn-due --now >/tmp/cos-learn3.log 2>&1
+check "weekly review ran" 'grep -q "weekly review" /tmp/cos-learn3.log'
+check "CoS scorecard row written" 'grep -qE "^\| [0-9-]+ \([0-9]{4}-W[0-9]{2}\) \| 1 \|" "$HOME/ChiefOfStaff/Context/Chief_of_Staff/coo/SCORECARD.md"'
+check "VP scorecard row written" 'grep -qE "\([0-9]{4}-W[0-9]{2}\)" "$HOME/ChiefOfStaff/Context/Production_VP/coo/SCORECARD.md"'
+python3 "$REPO/bin/cos.py" learn-due --now >/tmp/cos-learn4.log 2>&1
+check "learn-due idempotent" 'grep -q "nothing due" /tmp/cos-learn4.log'
+
 "$REPO/uninstall.sh" >/tmp/cos-uninstall.log 2>&1
 check "uninstall exits 0" '[ $? -eq 0 ]'
 check "links gone" '[ ! -e "$HOME/.claude/chief-of-staff" ] && [ ! -e "$HOME/.claude/skills/chief-of-staff" ]'
@@ -76,10 +94,11 @@ check "data kept" '[ -f "$HOME/ChiefOfStaff/Context/Acme/COO_CHARTER.md" ]'
 
 # A default install ships no COOs: only the Production VP.
 export HOME="$(mktemp -d)"
+export COS_NO_LAUNCHD=1 COS_NO_KNOWLEDGE_TEST=1   # never load a real LaunchAgent or call claude from a test
 "$REPO/install.sh" --yes --owner Sam >/tmp/cos-install-4.log 2>&1
 check "default install exits 0" '[ $? -eq 0 ]'
 check "default config has no COOs" 'grep -q "^projects: \[\]" "$HOME/.claude/cos-config.yaml"'
-check "default Context holds only the VP" '[ "$(ls "$HOME/ChiefOfStaff/Context")" = "Production_VP" ]'
+check "default Context holds the CoS and the VP" '[ "$(ls "$HOME/ChiefOfStaff/Context" | tr "\n" " ")" = "Chief_of_Staff Production_VP " ]'
 python3 "$REPO/bin/cos.py" add-project "First App" >/dev/null 2>&1
 check "add-project into empty list" 'grep -q "^  - First App" "$HOME/.claude/cos-config.yaml" && ! grep -q "projects: \[\]" "$HOME/.claude/cos-config.yaml"'
 rm -rf "$HOME"

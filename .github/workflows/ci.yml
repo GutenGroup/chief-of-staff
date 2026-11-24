@@ -1,0 +1,67 @@
+name: ci
+# Every push and PR to main: private-data check, plugin validation, tests.
+# A green push to main then tags and releases: v$(VERSION) if that tag does not exist yet, else the next patch.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Private-data check
+        env:
+          DENY_PATTERNS: ${{ secrets.DENY_PATTERNS }}
+        run: python3 .github/scripts/pii_check.py .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Plugin validation (directory profile)
+        run: npx -y @anthropic-ai/claude-code plugin validate . --profile directory
+      - name: Tests
+        run: |
+          python3 -m unittest discover -s tests
+          bash tests/test_install.sh
+  release:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip release]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "Guten Group"
+          git config user.email "noreply@guten.group"
+          v=$(tr -d ' \n' < VERSION)
+          if git rev-parse -q --verify "refs/tags/v$v" >/dev/null; then
+            if [ "$(git rev-list -n1 "v$v")" = "$(git rev-parse HEAD)" ]; then echo "HEAD is already v$v"; exit 0; fi
+            IFS=. read -r a b c <<<"$v"; v="$a.$b.$((c + 1))"
+            echo "$v" > VERSION
+            python3 - "$v" <<'PY'
+          import json, sys
+          p = ".claude-plugin/plugin.json"; d = json.load(open(p)); d["version"] = sys.argv[1]
+          open(p, "w").write(json.dumps(d, indent=2) + "\n")
+          PY
+            git commit -qam "Release v$v [skip release]"
+            git push -q origin HEAD:main
+          fi
+          git tag -a "v$v" -m "Chief of Staff v$v"
+          git push -q origin "v$v"
+          prev=$(git describe --tags --abbrev=0 "v$v^" 2>/dev/null || true)
+          gh release create "v$v" --title "Chief of Staff v$v" --generate-notes ${prev:+--notes-start-tag "$prev"}

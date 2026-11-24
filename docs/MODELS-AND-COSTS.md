@@ -35,3 +35,7 @@ Sessions you started yourself are never changed; you get one line in the brief i
 | Fewer COOs | merge thin ones ([Setting up COOs](SETTING-UP-COOS.md)) |
 | Pause a COO | stop its session; nothing is lost, its files stay |
 | Pause everything | stop the Chief of Staff session's loop (`CronList`, then `CronDelete`) |
+| Clear earlier | lower `clear_at_*` in `~/.claude/cos-config.yaml` ([Operating](OPERATING.md)) |
+
+Effort policy and the per-task model table in more detail: [Operating](OPERATING.md#models-and-effort). Fewer wasted
+turns on routing and retries: [With and without Jev](JEV.md).
