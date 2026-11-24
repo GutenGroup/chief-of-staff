@@ -28,6 +28,7 @@ Built and tuned for a product studio running several products (a COO per product
 - [Operating](OPERATING.md): memory and clearing, max context, models and effort, loops
 - [The Production VP](PRODUCTION-VP.md)
 - [How it learns](HOW-IT-LEARNS.md)
+- [Add your own rules](OVERLAY.md): the overlay, what goes upstream, one overlay for a team
 - [Models and costs](MODELS-AND-COSTS.md)
 - [With and without Jev](JEV.md): optional decision model, the tradeoff
 - [FAQ](FAQ.md)

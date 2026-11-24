@@ -9,6 +9,8 @@ Setup and housekeeping
   cos.py list-coos                  the Production VP and every COO with its report line and onboarding state
   cos.py sidebar                    write ~/.claude/needs-input/sidebar.json for the Workspace panel
   cos.py status                     print mode, machine, folders, projects and queue counts
+  cos.py overlay init [DIR]         create your own-rules overlay: one starter file per skill (never overwrites);
+                                    sets overlay_dir in the config when it is not set yet (docs/OVERLAY.md)
 
 Learning (every role: the Chief of Staff, the Production VP, each COO)
   cos.py lesson <Role> "<text>" [--check <id> "<regex>"]
@@ -637,6 +639,63 @@ def cmd_merge_briefs():
     return 0
 
 
+OVERLAY_SKILLS = {
+    "chief-of-staff.md": "the Chief of Staff",
+    "project-coo.md": "every COO",
+    "production-vp.md": "the Production VP",
+    "helm.md": "Helm (goals, charters, how the system runs)",
+}
+
+OVERLAY_TEMPLATE = """# Your rules for %(who)s
+<!--
+%(skill)s reads this file right after its own instructions. Where the two disagree, this file wins.
+Plugin updates never touch this folder.
+
+Put here what only fits your setup: names, paths, tools, accounts, policies, how you like to be asked.
+A rule that would help every user belongs upstream instead: open a pull request on the plugin.
+Never put a password, key or token here.
+
+Write plain rules, one per line, for example:
+- Route anything about billing to the Finance COO.
+- Reports go to the shared folder ~/Team/reports.
+- Ask me before anything that sends email outside the company.
+
+Delete this comment when you add your first rule. A file with only this comment adds nothing.
+-->
+"""
+
+
+def cmd_overlay(rest):
+    if not rest or rest[0] != "init":
+        print("usage: cos overlay init [DIR]")
+        return 2
+    path = C.config_path()
+    try:
+        text = open(path, encoding="utf-8").read()
+    except OSError:
+        text = ""
+    has_key = any(re.match(r"overlay_dir\s*:", l) for l in text.splitlines())
+    target = os.path.abspath(os.path.expanduser(rest[1])) if len(rest) > 1 else C.OVERLAY
+    os.makedirs(target, exist_ok=True)
+    made = []
+    for name, who in OVERLAY_SKILLS.items():
+        f = os.path.join(target, name)
+        if os.path.exists(f):
+            continue
+        with open(f, "w", encoding="utf-8") as fh:
+            fh.write(OVERLAY_TEMPLATE % {"who": who, "skill": who[0].upper() + who[1:]})
+        made.append(name)
+    print("overlay: %s\ncreated: %d file(s)%s" % (target, len(made), (" (%s)" % ", ".join(made)) if made else ""))
+    if not has_key and not os.environ.get("COS_OVERLAY"):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "a", encoding="utf-8") as fh:
+            fh.write(("" if not text or text.endswith("\n") else "\n") + "overlay_dir: %s\n" % target)
+        print("config: overlay_dir set to %s in %s" % (target, path))
+    elif os.path.abspath(C.OVERLAY) != target:
+        print("config: overlay_dir already points at %s; left unchanged" % C.OVERLAY)
+    return 0
+
+
 def main(argv):
     if not argv or argv[0] in ("-h", "--help", "help"):
         print(__doc__)
@@ -670,6 +729,8 @@ def main(argv):
         return cmd_sidebar()
     if cmd == "status":
         return cmd_status()
+    if cmd == "overlay":
+        return cmd_overlay(rest)
     if cmd in ("tick-check", "tick-peek", "tick-complete"):
         return cmd_tick(cmd.split("-", 1)[1])
     if cmd == "submit" and rest:

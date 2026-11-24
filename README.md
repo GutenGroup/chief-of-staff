@@ -48,7 +48,7 @@ Then start a session titled **Chief of Staff** (Opus, medium) and send `/chief-o
 
 - **Docs site:** https://guten.group/ai/chief-of-staff/
 - **In the repo:** [Getting started](docs/GETTING-STARTED.md) · [Setting up COOs](docs/SETTING-UP-COOS.md) ·
-  [How it works](docs/HOW-IT-WORKS.md) · [Operating](docs/OPERATING.md) · [Production VP](docs/PRODUCTION-VP.md) · [How it learns](docs/HOW-IT-LEARNS.md) ·
+  [How it works](docs/HOW-IT-WORKS.md) · [Operating](docs/OPERATING.md) · [Production VP](docs/PRODUCTION-VP.md) · [How it learns](docs/HOW-IT-LEARNS.md) · [Add your own rules](docs/OVERLAY.md) ·
   [Models and costs](docs/MODELS-AND-COSTS.md) · [With and without Jev](docs/JEV.md) · [FAQ](docs/FAQ.md) ·
   [Troubleshooting](docs/TROUBLESHOOTING.md) · [Reference](docs/REFERENCE.md)
 - **Inside Claude Code:** `/cos-help <your question>`

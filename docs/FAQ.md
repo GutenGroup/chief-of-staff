@@ -68,6 +68,13 @@ that runs every pass, and a weekly scorecard counts repeated corrections per rol
 knowledge test grades each role on its own files. Works for the Chief of Staff, the Production VP and every COO. More:
 [How it learns](HOW-IT-LEARNS.md).
 
+### How do I add my own rules?
+Run `cos overlay init`. It creates `~/.claude/cos-overlay/` with one file per skill (`chief-of-staff.md`,
+`project-coo.md`, `production-vp.md`, `helm.md`). Write your rules there in plain language: each skill reads its file
+after its own text, the overlay wins on conflict, and plugin updates never touch it. Rules that would help everyone go
+upstream as a pull request instead. A team shares one overlay by pointing everyone's `overlay_dir` at the same folder or
+repository. More: [Add your own rules](OVERLAY.md).
+
 ### How do I teach a COO something?
 Tell it, or tell the Chief of Staff about it. Corrections become lessons in that COO's `coo/LESSONS.md` the same day, and
 repeated ones become rules and machine checks.

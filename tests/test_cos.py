@@ -219,6 +219,38 @@ class CosTest(unittest.TestCase):
         out = self.run_cos("status").stdout
         self.assertIn("overlay: %s (chief-of-staff.md, project-coo.md)" % os.path.abspath(ov), out)
 
+    def test_overlay_init_creates_files_sets_config_never_overwrites(self):
+        out = self.run_cos("overlay", "init").stdout
+        ov = self.p(".claude", "cos-overlay")
+        self.assertIn("created: 4 file(s)", out)
+        for name in ("chief-of-staff.md", "project-coo.md", "production-vp.md", "helm.md"):
+            self.assertIn("<!--", open(os.path.join(ov, name)).read())
+        self.assertIn("overlay_dir: %s\n" % ov, open(self.cfg).read())
+        with open(os.path.join(ov, "helm.md"), "w") as f:
+            f.write("my rule\n")
+        os.remove(os.path.join(ov, "project-coo.md"))
+        out = self.run_cos("overlay", "init").stdout
+        self.assertIn("created: 1 file(s) (project-coo.md)", out)
+        self.assertEqual(open(os.path.join(ov, "helm.md")).read(), "my rule\n")
+        self.assertEqual(open(self.cfg).read().count("overlay_dir:"), 1)
+        self.assertIn("overlay: %s (chief-of-staff.md, helm.md, production-vp.md, project-coo.md)" % ov,
+                      self.run_cos("status").stdout)
+
+    def test_overlay_init_keeps_existing_overlay_dir(self):
+        shared = self.p("team-rules")
+        with open(self.cfg, "a") as f:
+            f.write("overlay_dir: %s\n" % shared)
+        before = open(self.cfg).read()
+        self.run_cos("overlay", "init")
+        self.assertTrue(os.path.exists(os.path.join(shared, "chief-of-staff.md")))
+        self.assertEqual(open(self.cfg).read(), before)
+        out = self.run_cos("overlay", "init", self.p("elsewhere")).stdout
+        self.assertIn("left unchanged", out)
+        self.assertEqual(open(self.cfg).read(), before)
+
+    def test_overlay_bad_usage(self):
+        self.assertEqual(self.run_cos("overlay", ok=False).returncode, 2)
+
     def test_plugin_version_matches_version_file(self):
         root = os.path.dirname(os.path.dirname(COS))
         v = open(os.path.join(root, "VERSION")).read().strip()

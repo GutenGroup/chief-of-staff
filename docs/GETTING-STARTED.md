@@ -58,4 +58,16 @@ first, and you can always type your own answer.
 From then on you talk to the Chief of Staff, or answer its dialogs in the panel. Run the interview again any time with
 `/coo-setup`, or add a single COO with `/add-coo <name>`.
 
+## 4. Add your own rules (optional)
+
+Your names, tools, folders and policies go in an overlay that updates never touch:
+
+```bash
+cos overlay init
+```
+
+It creates one starter file per skill in `~/.claude/cos-overlay/`. Edit them in plain language; each skill reads its file
+after its own instructions and the overlay wins on conflict. A team can share one overlay folder. More:
+[Add your own rules](OVERLAY.md).
+
 Next: [How it works](HOW-IT-WORKS.md) · [Setting up COOs](SETTING-UP-COOS.md) · [FAQ](FAQ.md)
