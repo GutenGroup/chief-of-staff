@@ -1,9 +1,7 @@
-# Chief of Staff (Markdown edition)
+# Chief of Staff (ChatGPT edition)
 
-The role instructions of the Chief of Staff plugin, as Markdown only: the Chief of Staff, the Production VP, the
-Communication VP, the project COO and the Helm operating model, three commands and the cheap `coo-worker` agent.
+Role skills for running many work streams like a small company: a Chief of Staff, a Production VP, a Communication VP,
+one COO per project and the Helm operating model. The `chief-of-staff` app (https://guten.group/api/cos-mcp/) adds three read-only tools: explain
+a role, show a demo brief, and point to the open source install. It holds no user data.
 
-This edition has no scripts and no hooks. The full system (the `cos` command, the job runner, the session hooks and the
-optional Workspace panel) is installed from the main repository: https://github.com/GutenGroup/chief-of-staff#readme.
-
-Version 1.5.4. License: MIT. Made by Guten Group, https://guten.group/ai/chief-of-staff/
+Version 1.5.5. License: MIT. Made by Guten Group, https://guten.group/ai/chief-of-staff/. Source: https://github.com/GutenGroup/chief-of-staff

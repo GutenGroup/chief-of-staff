@@ -135,52 +135,139 @@ def build_directory(dest):
     write(os.path.join(dest, "README.md"), README.format(repo=REPO, v=v, home=HOME))
 
 
+MCP_URL = "https://guten.group/api/cos-mcp/"
+PRIVACY = "https://guten.group/privacy/"
+TERMS = "https://guten.group/terms/"
+
+# The ChatGPT edition has its own short, platform-neutral role skills: the full skills are written for one coding
+# assistant's session tools and file paths, and OpenAI refuses listings that name another assistant.
+GPT_RULES = """
+## How to work in this role
+
+- Lead with the answer: what needs the owner, then what is moving without them. Keep a brief short.
+- Ask the owner only for a real decision. Ask it as a short choice with your recommendation first and one line on each
+  alternative. Never ask what a standing rule or an earlier decision already answers.
+- Reversible, already-authorized work is not a question: do it and report.
+- Never sign or accept an agreement and never pay or move money for the owner; prepare everything up to that step and
+  give the owner the exact link.
+- Done means verified: a check that was run, a link that opens, a result someone can see. Not "should work".
+
+## Tools
+
+The `chief-of-staff` app has three read-only tools: `explain_chief_of_staff` (what a role does), `show_demo_brief` (an
+example brief) and `get_install_info` (the open source install, docs and issues). They hold no user data.
+"""
+
+GPT_SKILLS = {
+    "chief-of-staff": (
+        "Act as the owner's Chief of Staff across all their projects and work streams: find what really needs the owner, "
+        "what is moving and what is stalled, route new work to the right project owner, and write a short brief. Use when "
+        "the owner asks \"what needs me\", \"what's cooking\", \"who is working on what\" or \"chief of staff\".",
+        "Chief of Staff",
+        "You keep the owner's whole operation in view. Each pass: list what truly waits on the owner, what each project "
+        "owner (COO) and each work stream is doing, what has stalled and the nudge you gave it, and where new work goes. "
+        "You coordinate; you do not do the project work yourself. Your instruction to a COO carries the owner's authority "
+        "within the owner's decisions and standing rules."),
+    "production-vp": (
+        "Act as the Production VP: hold one build and quality standard across every product, check that work called done "
+        "is verified live, and coach the product COOs. Use when reviewing whether work is really done, setting a build "
+        "standard or judging release quality.",
+        "Production VP",
+        "You sit between the Chief of Staff and the product COOs. You hold one standard: work counts as done only when it "
+        "is verified live, on the version that shipped. You reject a \"done\" with no check, say what check is missing, "
+        "and coach the COO that slipped. You report to the Chief of Staff."),
+    "communication-vp": (
+        "Act as the Communication VP: turn what the COOs want said into clear drafts, route each to the right people and "
+        "channel, send only where the owner allowed it, and route replies back to the owning COO. Use for outgoing "
+        "messages, announcements and inbound message triage.",
+        "Communication VP",
+        "COOs tell you what they want said. You draft it in the owner's plain style, pick the right people and channel, "
+        "and send only where the owner has given send authority; everywhere else you show the draft for approval. "
+        "Inbound messages go to the COO that owns the topic. You report to the Chief of Staff."),
+    "project-coo": (
+        "Act as the COO of one project: turn the owner's direction into monthly goals, decide locally where a standing "
+        "rule covers it, hand work to workers and report up to the Chief of Staff. Use when the owner says \"COO\" or sets "
+        "up or runs a single project.",
+        "Project COO",
+        "You own one project. Keep its goals for the month, its decisions and its facts written down, with source and "
+        "date. Decide locally whenever a recorded decision or standing rule covers the question; escalate only what is "
+        "new, irreversible, outward, money or people. Give each worker one well-scoped job and verify the result before "
+        "you report it."),
+    "helm": (
+        "The operating model behind the Chief of Staff: the owner sets direction, the Chief of Staff and one COO per "
+        "project turn it into verified goals and a short daily report. Use when setting or reviewing goals, writing a COO "
+        "charter, or changing how the system works.",
+        "Helm",
+        "Goals are monthly. The Chief of Staff challenges each goal against the owner's top priority, and the owner "
+        "approves all goals in one pack. An issue that touches several COOs is settled by the COOs it affects, with "
+        "evidence; anything irreversible, outward, money or people goes to the owner. Use plain words with the owner: "
+        "goals, numbers, the daily report."),
+}
+
+GPT_README = """# Chief of Staff (ChatGPT edition)
+
+Role skills for running many work streams like a small company: a Chief of Staff, a Production VP, a Communication VP,
+one COO per project and the Helm operating model. The `chief-of-staff` app ({mcp}) adds three read-only tools: explain
+a role, show a demo brief, and point to the open source install. It holds no user data.
+
+Version {v}. License: MIT. Made by Guten Group, {home}. Source: {repo}
+"""
+
+
 def build_chatgpt(dest):
     v = version()
-    markdown_tree(dest)
+    for name, (desc, title, body) in GPT_SKILLS.items():
+        write(os.path.join(dest, "skills", name, "SKILL.md"),
+              quoted_front({"name": name, "description": desc}) + "# %s\n\n%s\n%s" % (title, body, GPT_RULES))
+    os.makedirs(os.path.join(dest, "assets"), exist_ok=True)
+    shutil.copyfile(os.path.join(ROOT, "assets", "icon.png"), os.path.join(dest, "assets", "icon.png"))
+    write(os.path.join(dest, "mcp.json"), json.dumps({
+        "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+        "mcpServers": {"chief-of-staff": {"type": "streamable-http", "url": MCP_URL}},
+    }, indent=2) + "\n")
     manifest = {
         "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
         "name": "chief-of-staff",
         "version": v,
-        "description": "An operating model for AI work sessions: a Chief of Staff, a Production VP, a Communication VP, one "
-                       "COO per project and cheap workers. Skills only; no data leaves your account.",
+        "description": "Run many work streams like a small company: a Chief of Staff, a Production VP, a Communication VP "
+                       "and one COO per project, with short briefs and decisions as clear choices.",
         "author": {"name": "Guten Group", "url": HOME},
         "homepage": HOME,
         "repository": REPO,
         "license": "MIT",
-        "keywords": ["chief of staff", "coordination", "delegation", "productivity", "agents"],
+        "keywords": ["chief of staff", "coordination", "delegation", "productivity", "operations"],
         "skills": "./skills/",
         "extensions": {
             "com.openai": {
                 "interface": {
                     "displayName": "Chief of Staff",
-                    "shortDescription": "Run your AI work like a team",
+                    "shortDescription": "Run your work like a team",
                     "longDescription": (
-                        "Chief of Staff is an operating model for people who run many AI work sessions at once. One "
-                        "Chief of Staff keeps track of every session, says what really waits on you and routes new work. "
-                        "A Production VP holds one build standard and checks that work is verified before it is called "
+                        "Chief of Staff is an operating model for people who run many projects and work streams at once. "
+                        "A Chief of Staff keeps track of everything, says what really waits on you and routes new work. A "
+                        "Production VP holds one quality standard and checks that work is verified before it is called "
                         "done. A Communication VP drafts and routes what you want said. One COO per project turns your "
-                        "direction into goals and delegates to cheap workers.\n\nThis plugin holds the role instructions "
-                        "as skills. It has no server and reads no account data. Decisions come to you as short choices "
-                        "with a recommendation first.\n\nThe full system for Claude Code, with scripts and a desktop "
-                        "panel, is open source at " + REPO + "."),
+                        "direction into monthly goals and hands work to helpers.\n\nThe app explains each role, shows a "
+                        "demo brief and points to the open source project. It is read-only, needs no sign-in and has no "
+                        "access to your data. Decisions come to you as short choices with a recommendation first.\n\n"
+                        "Open source (MIT): " + REPO),
                     "developerName": "Guten Group",
                     "category": "Productivity",
                     "capabilities": [
-                        "Plan the day across many work sessions",
-                        "Route new work to the right project owner",
+                        "Explain each role in the operating model",
+                        "Show what a daily brief looks like",
+                        "Point to the open source install and docs",
+                        "Plan the day across many work streams",
                         "Hold a build and quality standard",
-                        "Turn direction into monthly goals",
-                        "Draft and route outgoing messages",
                     ],
                     "websiteURL": HOME,
                     "supportURL": REPO + "/issues",
-                    "privacyPolicyURL": "https://guten.group/privacy/",
-                    "termsOfServiceURL": "https://guten.group/terms/",
+                    "privacyPolicyURL": PRIVACY,
+                    "termsOfServiceURL": TERMS,
                     "defaultPrompt": [
-                        "Act as my Chief of Staff: what needs me today?",
-                        "Set up a COO for my side project.",
-                        "Review this plan against the Production VP standard.",
+                        "What does a Chief of Staff brief look like?",
+                        "Explain what a project COO does.",
+                        "How do I install Chief of Staff?",
                     ],
                     "brandColor": "#0C0C14",
                     "brandColorDark": "#EEEEF4",
@@ -192,20 +279,25 @@ def build_chatgpt(dest):
                 "review": {
                     "test_cases": {
                         "positive": [
-                            {"description": "Daily brief",
-                             "prompt": "Act as my Chief of Staff. I have three projects: a web app, a newsletter and taxes. What should I look at first today?",
-                             "tools_triggered": "skill: chief-of-staff",
-                             "expected_behavior": "Gives a short brief with one recommended first item and asks any decision as a choice with the recommendation first."},
-                            {"description": "Add a COO",
-                             "prompt": "Set up a COO for my newsletter.",
-                             "tools_triggered": "skill: chief-of-staff, project-coo",
-                             "expected_behavior": "Runs the short interview (what winning looks like this month, who it reports to) and writes a one-page charter."},
-                            {"description": "Quality bar",
-                             "prompt": "My worker says the fix is done. Is it?",
-                             "tools_triggered": "skill: production-vp",
-                             "expected_behavior": "Asks for the live check pinned to the shipped version before calling it done."},
+                            {"description": "Explain the system",
+                             "prompt": "What is the Chief of Staff system and what roles does it have?",
+                             "tools_triggered": "explain_chief_of_staff",
+                             "expected_behavior": "Explains the Chief of Staff, Production VP, Communication VP, project COO, worker and Helm roles in plain language."},
+                            {"description": "Explain one role",
+                             "prompt": "What does the Production VP do in Chief of Staff?",
+                             "tools_triggered": "explain_chief_of_staff",
+                             "expected_behavior": "Calls the tool with role production-vp and explains the quality bar: work is done only when verified live."},
+                            {"description": "Demo brief",
+                             "prompt": "Show me an example of a Chief of Staff brief.",
+                             "tools_triggered": "show_demo_brief",
+                             "expected_behavior": "Shows the demo brief with what needs the owner, what is moving and what stalled, and says it is demo data."},
+                            {"description": "Install",
+                             "prompt": "How do I install Chief of Staff?",
+                             "tools_triggered": "get_install_info",
+                             "expected_behavior": "Gives the open source repository, the getting-started guide and the documentation links."},
                         ],
                         "negative": [
+                            {"description": "No access to private data", "prompt": "Read my email and tell me what needs me."},
                             {"description": "No money movement", "prompt": "Pay my contractor 500 dollars."},
                             {"description": "No legal signature", "prompt": "Sign this agreement for me."},
                         ],
@@ -213,12 +305,13 @@ def build_chatgpt(dest):
                     "commerce": False,
                     "commerce_description": "This plugin does not sell anything or process payments.",
                 },
-                "publication": {"release_notes": "Chief of Staff %s: the role instructions as skills." % v},
+                "publication": {"release_notes": "Chief of Staff %s: role skills plus a read-only app that explains the "
+                                                  "roles, shows a demo brief and links the open source install." % v},
             }
         },
     }
     write(os.path.join(dest, "plugin.json"), json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
-    write(os.path.join(dest, "README.md"), README.format(repo=REPO, v=v, home=HOME))
+    write(os.path.join(dest, "README.md"), GPT_README.format(mcp=MCP_URL, v=v, home=HOME, repo=REPO))
     dist = os.path.join(dest, "dist")
     os.makedirs(dist, exist_ok=True)
     for old in os.listdir(dist):
@@ -230,6 +323,10 @@ def build_chatgpt(dest):
             for f in sorted(files):
                 full = os.path.join(base, f)
                 z.write(full, os.path.relpath(full, dest))
+    with zipfile.ZipFile(zpath) as z:
+        for n in z.namelist():
+            if re.search(r"claude", z.read(n).decode("utf-8", "ignore"), re.I) and n.endswith((".md", ".json")):
+                raise SystemExit("chatgpt edition names another assistant in %s" % n)
 
 
 def problems(dest):

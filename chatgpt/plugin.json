@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "chief-of-staff",
-  "version": "1.5.4",
-  "description": "An operating model for AI work sessions: a Chief of Staff, a Production VP, a Communication VP, one COO per project and cheap workers. Skills only; no data leaves your account.",
+  "version": "1.5.5",
+  "description": "Run many work streams like a small company: a Chief of Staff, a Production VP, a Communication VP and one COO per project, with short briefs and decisions as clear choices.",
   "author": {
     "name": "Guten Group",
     "url": "https://guten.group/ai/chief-of-staff/"
@@ -15,32 +15,32 @@
     "coordination",
     "delegation",
     "productivity",
-    "agents"
+    "operations"
   ],
   "skills": "./skills/",
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "Chief of Staff",
-        "shortDescription": "Run your AI work like a team",
-        "longDescription": "Chief of Staff is an operating model for people who run many AI work sessions at once. One Chief of Staff keeps track of every session, says what really waits on you and routes new work. A Production VP holds one build standard and checks that work is verified before it is called done. A Communication VP drafts and routes what you want said. One COO per project turns your direction into goals and delegates to cheap workers.\n\nThis plugin holds the role instructions as skills. It has no server and reads no account data. Decisions come to you as short choices with a recommendation first.\n\nThe full system for Claude Code, with scripts and a desktop panel, is open source at https://github.com/GutenGroup/chief-of-staff.",
+        "shortDescription": "Run your work like a team",
+        "longDescription": "Chief of Staff is an operating model for people who run many projects and work streams at once. A Chief of Staff keeps track of everything, says what really waits on you and routes new work. A Production VP holds one quality standard and checks that work is verified before it is called done. A Communication VP drafts and routes what you want said. One COO per project turns your direction into monthly goals and hands work to helpers.\n\nThe app explains each role, shows a demo brief and points to the open source project. It is read-only, needs no sign-in and has no access to your data. Decisions come to you as short choices with a recommendation first.\n\nOpen source (MIT): https://github.com/GutenGroup/chief-of-staff",
         "developerName": "Guten Group",
         "category": "Productivity",
         "capabilities": [
-          "Plan the day across many work sessions",
-          "Route new work to the right project owner",
-          "Hold a build and quality standard",
-          "Turn direction into monthly goals",
-          "Draft and route outgoing messages"
+          "Explain each role in the operating model",
+          "Show what a daily brief looks like",
+          "Point to the open source install and docs",
+          "Plan the day across many work streams",
+          "Hold a build and quality standard"
         ],
         "websiteURL": "https://guten.group/ai/chief-of-staff/",
         "supportURL": "https://github.com/GutenGroup/chief-of-staff/issues",
         "privacyPolicyURL": "https://guten.group/privacy/",
         "termsOfServiceURL": "https://guten.group/terms/",
         "defaultPrompt": [
-          "Act as my Chief of Staff: what needs me today?",
-          "Set up a COO for my side project.",
-          "Review this plan against the Production VP standard."
+          "What does a Chief of Staff brief look like?",
+          "Explain what a project COO does.",
+          "How do I install Chief of Staff?"
         ],
         "brandColor": "#0C0C14",
         "brandColorDark": "#EEEEF4",
@@ -53,25 +53,35 @@
         "test_cases": {
           "positive": [
             {
-              "description": "Daily brief",
-              "prompt": "Act as my Chief of Staff. I have three projects: a web app, a newsletter and taxes. What should I look at first today?",
-              "tools_triggered": "skill: chief-of-staff",
-              "expected_behavior": "Gives a short brief with one recommended first item and asks any decision as a choice with the recommendation first."
+              "description": "Explain the system",
+              "prompt": "What is the Chief of Staff system and what roles does it have?",
+              "tools_triggered": "explain_chief_of_staff",
+              "expected_behavior": "Explains the Chief of Staff, Production VP, Communication VP, project COO, worker and Helm roles in plain language."
             },
             {
-              "description": "Add a COO",
-              "prompt": "Set up a COO for my newsletter.",
-              "tools_triggered": "skill: chief-of-staff, project-coo",
-              "expected_behavior": "Runs the short interview (what winning looks like this month, who it reports to) and writes a one-page charter."
+              "description": "Explain one role",
+              "prompt": "What does the Production VP do in Chief of Staff?",
+              "tools_triggered": "explain_chief_of_staff",
+              "expected_behavior": "Calls the tool with role production-vp and explains the quality bar: work is done only when verified live."
             },
             {
-              "description": "Quality bar",
-              "prompt": "My worker says the fix is done. Is it?",
-              "tools_triggered": "skill: production-vp",
-              "expected_behavior": "Asks for the live check pinned to the shipped version before calling it done."
+              "description": "Demo brief",
+              "prompt": "Show me an example of a Chief of Staff brief.",
+              "tools_triggered": "show_demo_brief",
+              "expected_behavior": "Shows the demo brief with what needs the owner, what is moving and what stalled, and says it is demo data."
+            },
+            {
+              "description": "Install",
+              "prompt": "How do I install Chief of Staff?",
+              "tools_triggered": "get_install_info",
+              "expected_behavior": "Gives the open source repository, the getting-started guide and the documentation links."
             }
           ],
           "negative": [
+            {
+              "description": "No access to private data",
+              "prompt": "Read my email and tell me what needs me."
+            },
             {
               "description": "No money movement",
               "prompt": "Pay my contractor 500 dollars."
@@ -86,7 +96,7 @@
         "commerce_description": "This plugin does not sell anything or process payments."
       },
       "publication": {
-        "release_notes": "Chief of Staff 1.5.4: the role instructions as skills."
+        "release_notes": "Chief of Staff 1.5.5: role skills plus a read-only app that explains the roles, shows a demo brief and links the open source install."
       }
     }
   }
