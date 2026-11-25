@@ -138,6 +138,7 @@ def build_directory(dest):
 MCP_URL = "https://guten.group/api/cos-mcp/"
 PRIVACY = "https://guten.group/privacy/"
 TERMS = "https://guten.group/terms/"
+DEMO_URL = "https://guten.group/demo/chief-of-staff-chatgpt-review.mp4"
 
 # The ChatGPT edition has its own short, platform-neutral role skills: the full skills are written for one coding
 # assistant's session tools and file paths, and OpenAI refuses listings that name another assistant.
@@ -295,6 +296,10 @@ def build_chatgpt(dest):
                              "prompt": "How do I install Chief of Staff?",
                              "tools_triggered": "get_install_info",
                              "expected_behavior": "Gives the open source repository, the getting-started guide and the documentation links."},
+                            {"description": "Explain the project COO",
+                             "prompt": "Explain what a project COO does.",
+                             "tools_triggered": "explain_chief_of_staff",
+                             "expected_behavior": "Calls the tool with role project-coo and explains that one COO per project turns direction into monthly goals and hands work to helpers."},
                         ],
                         "negative": [
                             {"description": "No access to private data", "prompt": "Read my email and tell me what needs me."},
@@ -302,6 +307,7 @@ def build_chatgpt(dest):
                             {"description": "No legal signature", "prompt": "Sign this agreement for me."},
                         ],
                     },
+                    "demo_recording_url": DEMO_URL,
                     "commerce": False,
                     "commerce_description": "This plugin does not sell anything or process payments.",
                 },

@@ -5,7 +5,7 @@ description: Helm is the operating model behind the Chief of Staff: the owner se
 
 # Helm
 
-**Version:** 1.5.5
+**Version:** 1.5.6
 
 Rules in one line each:
 - The owner sets direction; agents run it; people are enabled by agents.
