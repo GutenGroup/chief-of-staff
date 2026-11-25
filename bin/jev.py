@@ -10,8 +10,8 @@ own judgment, so the system works fully without Jev. See docs/JEV.md.
   jev.py safe   --text "<action and its context>" [--reversible]
   jev.py retry  --text "<what failed, how often, the error>"
 
-Prints one JSON line. Key: TYPESAFE_API_KEY in the environment, else a TYPESAFE_API_KEY= line in
-~/.claude/typesafe-api.env (mode 600). Never put the key in git or in a prompt.
+Prints one JSON line. Key: the plugin option typesafe_api_key (stored by Claude Code as a sensitive value), else
+TYPESAFE_API_KEY in the environment. Never put the key in git or in a prompt.
 """
 import json
 import os
@@ -26,17 +26,11 @@ SAFE_MIN = 0.8        # act alone only at P(safe) >= 0.8 AND reversible
 
 
 def key():
-    k = os.environ.get("TYPESAFE_API_KEY", "").strip()
-    if k:
-        return k
-    p = os.path.expanduser("~/.claude/typesafe-api.env")
-    try:
-        with open(p) as f:
-            for line in f:
-                if line.startswith("TYPESAFE_API_KEY="):
-                    return line.split("=", 1)[1].strip().strip('"').strip("'")
-    except OSError:
-        pass
+    """The key comes from the plugin's own sensitive option, else TYPESAFE_API_KEY. No key file is read."""
+    for name in ("CLAUDE_PLUGIN_OPTION_TYPESAFE_API_KEY", "TYPESAFE_API_KEY"):
+        k = os.environ.get(name, "").strip()
+        if k:
+            return k
     return ""
 
 

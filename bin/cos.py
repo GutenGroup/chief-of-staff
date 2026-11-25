@@ -384,13 +384,7 @@ def queue_counts():
 
 
 def jev_key_present():
-    if os.environ.get("TYPESAFE_API_KEY", "").strip():
-        return True
-    try:
-        with open(os.path.expanduser("~/.claude/typesafe-api.env")) as f:
-            return any(l.startswith("TYPESAFE_API_KEY=") and l.split("=", 1)[1].strip().strip("\"'") for l in f)
-    except OSError:
-        return False
+    return any(os.environ.get(n, "").strip() for n in ("CLAUDE_PLUGIN_OPTION_TYPESAFE_API_KEY", "TYPESAFE_API_KEY"))
 
 
 def cmd_status():

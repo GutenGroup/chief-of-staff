@@ -30,5 +30,5 @@ clear_at_cos: 150000
 clear_at_vp: 200000
 clear_at_coo: 150000
 
-# Optional Jev (TypeSafe) decisions: set TYPESAFE_API_KEY in your environment or in ~/.claude/typesafe-api.env.
+# Optional Jev (TypeSafe) decisions: set the plugin's TypeSafe API key option (stored as a sensitive value) or TYPESAFE_API_KEY in your environment.
 # Never put the key in this file. See docs/JEV.md.

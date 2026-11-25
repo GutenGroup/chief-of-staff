@@ -23,11 +23,15 @@ jobs:
         run: python3 .github/scripts/pii_check.py .
       - name: Highlights (3-6 bullets)
         run: python3 .github/scripts/highlights.py
+      - name: Editions up to date (directory/, chatgpt/)
+        run: python3 .github/scripts/build_editions.py --check
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Plugin validation (directory profile)
-        run: npx -y @anthropic-ai/claude-code plugin validate . --profile directory
+        run: |
+          npm install --global @anthropic-ai/claude-code
+          claude plugin validate . --profile directory
       - name: Tests
         run: |
           python3 -m unittest discover -s tests

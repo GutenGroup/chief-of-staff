@@ -39,14 +39,9 @@ fewer needless questions and wastes fewer retries.
 ## Connect a key
 
 1. Get a key at [typesafe.ai](https://typesafe.ai).
-2. Put it where only you can read it, **never in the config file or any repository**:
-
-   ```bash
-   printf 'TYPESAFE_API_KEY=%s\n' 'YOUR_KEY' > ~/.claude/typesafe-api.env
-   chmod 600 ~/.claude/typesafe-api.env
-   ```
-
-   Or export `TYPESAFE_API_KEY` in your shell profile.
+2. Enter it in the plugin's **TypeSafe API key** option (Claude Code asks for it when you enable the plugin, and
+   stores it as a sensitive value, not in a file the plugin reads). **Never put it in the config file or any
+   repository.** Or export `TYPESAFE_API_KEY` in your shell profile.
 3. Check: `cos status` prints `jev: key found`.
 
 Try it by hand:

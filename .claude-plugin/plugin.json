@@ -1,6 +1,6 @@
 {
   "name": "chief-of-staff",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "description": "An operating layer for Claude Code: one Chief of Staff session watches every other session, a Production VP and a Communication VP come standard, you choose your own COOs through a guided interview, and cheap worker sessions do the work. You get a short brief and click-through decisions.",
   "author": {
     "name": "Guten Group"
@@ -15,5 +15,14 @@
     "delegation",
     "productivity",
     "agents"
-  ]
+  ],
+  "userConfig": {
+    "typesafe_api_key": {
+      "type": "string",
+      "title": "TypeSafe API key",
+      "description": "Optional. Turns on Jev decisions (route, effort, safe, retry). Get a key at typesafe.ai. Stored as a sensitive value.",
+      "sensitive": true,
+      "default": ""
+    }
+  }
 }
