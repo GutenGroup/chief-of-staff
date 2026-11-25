@@ -8,3 +8,4 @@ noreply@guten.group
 guten.group/privacy/
 guten.group/terms/
 guten.group/api/cos-mcp/
+guten.group/demo/chief-of-staff-chatgpt-review.mp4
