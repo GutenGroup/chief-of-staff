@@ -3,6 +3,6 @@
 The "## Highlights" section of the next GitHub Release: 3-6 plain-language bullets of what users can now do.
 Update it in the same change as the feature. CI fails when there are fewer than 3 or more than 6 bullets.
 
-- A Markdown-only edition for the Claude plugin directory lives in `directory/`: the role skills, commands and the worker agent, no scripts or hooks.
-- The same skills are packaged for ChatGPT in `chatgpt/` (upload `chatgpt/dist/chief-of-staff-chatgpt-<version>.zip`).
-- The Jev (TypeSafe) key is now a sensitive plugin option; the plugin no longer reads a key file. `TYPESAFE_API_KEY` in your environment still works.
+- The ChatGPT edition now comes with a read-only Chief of Staff app (https://guten.group/api/cos-mcp/): explain a role, show a demo brief, find the install. No sign-in and no access to your data.
+- The ChatGPT edition has its own short role skills and links the privacy policy and terms.
+- The Claude directory edition in `directory/` is unchanged apart from the version.

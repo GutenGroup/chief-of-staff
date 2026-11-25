@@ -1,6 +1,6 @@
 {
   "name": "chief-of-staff",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "The Chief of Staff operating model for Claude Code as skills: one Chief of Staff session coordinates the others, a Production VP and a Communication VP come standard, one COO per project, and cheap worker agents do the work. Markdown edition; the full install with scripts is on GitHub.",
   "author": {
     "name": "Guten Group",
