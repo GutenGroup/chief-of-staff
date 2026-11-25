@@ -5,3 +5,5 @@ gutengroup.github.io/chief-of-staff
 guten.group/ai/chief-of-staff
 noreply@guten.group
 @Nitton76 @hogqvist
+guten.group/privacy/
+guten.group/terms/

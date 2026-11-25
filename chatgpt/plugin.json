@@ -35,8 +35,8 @@
         ],
         "websiteURL": "https://guten.group/ai/chief-of-staff/",
         "supportURL": "https://github.com/GutenGroup/chief-of-staff/issues",
-        "privacyPolicyURL": "https://guten.group/privacy",
-        "termsOfServiceURL": "https://guten.group/terms",
+        "privacyPolicyURL": "https://guten.group/privacy/",
+        "termsOfServiceURL": "https://guten.group/terms/",
         "defaultPrompt": [
           "Act as my Chief of Staff: what needs me today?",
           "Set up a COO for my side project.",

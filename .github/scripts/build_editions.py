@@ -175,8 +175,8 @@ def build_chatgpt(dest):
                     ],
                     "websiteURL": HOME,
                     "supportURL": REPO + "/issues",
-                    "privacyPolicyURL": "https://guten.group/privacy",
-                    "termsOfServiceURL": "https://guten.group/terms",
+                    "privacyPolicyURL": "https://guten.group/privacy/",
+                    "termsOfServiceURL": "https://guten.group/terms/",
                     "defaultPrompt": [
                         "Act as my Chief of Staff: what needs me today?",
                         "Set up a COO for my side project.",
