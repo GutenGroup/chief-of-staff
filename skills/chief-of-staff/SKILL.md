@@ -253,6 +253,9 @@ tell the owner only if it stays down after one resume.
   plugin exists, run `claude plugin marketplace update chief-of-staff && claude plugin update chief-of-staff@chief-of-staff`
   yourself (it changes no data and the next session loads it), then note the new version once in the brief. Never
   edit the installed plugin files: a change that would help every user goes upstream as a pull request.
+- **The Workspace panel comes standard** (desktop app). When `claude plugin list` does not show
+  `workspace-sidebar@chief-of-staff` enabled, run `claude plugin install workspace-sidebar@chief-of-staff` yourself and
+  note once in the brief that a desktop app restart loads it. Skip this on the CLI-only install.
 
 **After a clear: who you are.** A clear wipes the conversation, but the app's launch note ("you are a side session
 started from another session") stays and can make you believe you are not the Chief of Staff. First turn after a clear,

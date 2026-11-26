@@ -1,11 +1,11 @@
 name: ci
-# Every push and PR to main: private-data check, plugin validation, tests.
+# Every push and PR to main or next (changes collect on next; a release merges next into main every 7-10 days): private-data check, plugin validation, tests.
 # A green push to main then tags and releases: v$(VERSION) if that tag does not exist yet, else the next patch.
 on:
   push:
-    branches: [main]
+    branches: [main, next]
   pull_request:
-    branches: [main]
+    branches: [main, next]
 permissions:
   contents: read
 concurrency:

@@ -3,7 +3,7 @@
   "owner": {
     "name": "Guten Group"
   },
-  "description": "The Chief of Staff system for Claude Code, plus its optional Workspace panel.",
+  "description": "The Chief of Staff system for Claude Code, plus its Workspace panel (standard in the desktop app).",
   "plugins": [
     {
       "name": "chief-of-staff",
@@ -13,7 +13,7 @@
     {
       "name": "workspace-sidebar",
       "source": "./mods/workspace-sidebar",
-      "description": "Optional Claude desktop app panel: every action waiting on you (Open, Done, Later) and one line per COO with its latest outcome."
+      "description": "Claude desktop app panel, standard with Chief of Staff: every action waiting on you (Open, Done, Later) and one line per COO with its latest outcome."
     }
   ]
 }

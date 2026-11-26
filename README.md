@@ -42,7 +42,8 @@ In Claude Code:
 /plugin install chief-of-staff@chief-of-staff
 ```
 
-Optional Workspace panel for the desktop app: `claude plugin install workspace-sidebar@chief-of-staff`.
+The Workspace panel comes standard in the desktop app: the Chief of Staff installs it on its first run, or run
+`claude plugin install workspace-sidebar@chief-of-staff`.
 Then start a session titled **⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐** (Opus, medium) and send `/chief-of-staff`. It sets up your COOs with you.
 
 ## Documentation

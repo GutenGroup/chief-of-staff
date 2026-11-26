@@ -20,7 +20,7 @@ claude plugin marketplace add GutenGroup/chief-of-staff
 claude plugin install chief-of-staff@chief-of-staff
 ```
 
-Optional, desktop app only: the Workspace panel (every action waiting on you, with Open, Done and Later buttons, and one line per COO with its latest outcome).
+Standard in the desktop app: the Workspace panel (every action waiting on you, with Open, Done and Later buttons, and one line per COO with its latest outcome). The Chief of Staff installs it on its first run if it is missing; to install it yourself:
 
 ```bash
 claude plugin install workspace-sidebar@chief-of-staff

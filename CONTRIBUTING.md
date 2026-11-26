@@ -5,7 +5,7 @@ what we merge.
 
 ## Proposing a change
 
-1. Fork the repository and open a pull request against `main`. Say what the change lets a user do.
+1. Fork the repository and open a pull request against `next`. Say what the change lets a user do.
 2. Keep it generic: no names, hostnames, paths, keys or company-specific rules. Those belong in your own config or
    overlay (see [docs/OVERLAY.md](docs/OVERLAY.md)).
 3. Update `HIGHLIGHTS.md` with what users can now do (3-6 plain bullets); it becomes the release's `## Highlights`
@@ -21,5 +21,10 @@ from forks never receive the repository's secrets.
 
 ## Releases
 
-Only Guten Group members and the organization's own release automation push to `main`. A green change on `main` is
-tagged and published as a GitHub Release; installs pick it up on their next update. A red check blocks the release.
+Changes collect on the `next` branch: open pull requests against `next`, not `main`. Every pull request and push to
+`next` runs the full checks, and nothing on `next` is published.
+
+A release ships every 7 to 10 days: a Guten Group member merges `next` into `main` in one pull request, with `VERSION`
+bumped once and `HIGHLIGHTS.md` listing everything the release adds. A green change on `main` is tagged and published as
+a GitHub Release; installs pick it up on their next update. A red check blocks the release. Only an urgent fix for a
+broken install goes to `main` between releases, and it is merged back into `next` the same day.
