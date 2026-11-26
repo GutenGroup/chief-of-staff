@@ -69,8 +69,9 @@ the others, with a short `machine_id` each.
 The panel (`workspace-sidebar`) shows two things:
 
 1. **Waiting on you.** Every open ask, read live: the brief's `needsOwner` items, sessions that are waiting on a question
-   or plan, and every `needs-owner:` (or `needs-<your first name>:`) line written in the last 24 hours in
-   `<fleet>/coo-reports/*.md`. The same ask from two places shows once. Each card has the links in the ask (web page,
+   or plan, and every `needs-owner[legal]:` or `needs-owner[money]:` line (also `needs-<your first name>[legal]:`)
+   written in the last 24 hours in `<fleet>/coo-reports/*.md`. An untagged `needs-owner:` line is a question for the
+   Chief of Staff: it shows under that COO in the COOs list, marked "For Chief of Staff". The same ask from two places shows once. Each card has the links in the ask (web page,
    file, session) as buttons, plus **Done** (hides it for good and tells the Chief of Staff) and **Later** (hides it for
    3 hours). A COO clears its own earlier asks by writing `needs-owner: none`. Marks live in
    `~/.claude/needs-input/owner-actions.json`.

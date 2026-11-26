@@ -85,6 +85,9 @@ A pass with no change writes nothing and sends nothing.
 6. Report up: when something changed, a worker finished or the owner is needed, add ONE line at the top of
    `$REPORTS/<Project>.md` (format in that folder's README):
    `- <ISO time> | status: green|amber|red | done: ... | next: ... | needs-owner: none|<question> (options, recommended first, why)`
+   Tag a line that only the owner can do: `needs-owner[legal]:` (sign, accept terms) or `needs-owner[money]:` (pay, buy,
+   move money). Only tagged lines reach the owner's Workspace panel. An untagged `needs-owner:` line is a question for the
+   Chief of Staff, who answers it or turns it into a dialog; it shows in your row, never under "Waiting on you".
    Then rewrite `_COO_STATE.md`.
 7. Self-check before and after the report line: `python3 ~/.claude/chief-of-staff/bin/coo_lesson_check.py <Project>`.
    A violation means the line repeats a logged mistake: rewrite it and log why.
