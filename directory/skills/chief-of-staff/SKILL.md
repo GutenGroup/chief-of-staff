@@ -5,7 +5,7 @@ description: "The owner's Chief of Staff over every Claude Code session on this 
 
 # Chief of Staff
 
-**Version:** 1.6.0
+**Version:** 1.6.1
 
 > **Markdown edition.** This edition holds the role instructions only. The commands this skill names (`cos.py`,
 > `cos`, the job runner, the hooks and the Workspace panel) come with the full install: see the

@@ -5,7 +5,7 @@ description: The Communication VP, the standard role that handles all of the own
 
 # Communication VP
 
-**Version:** 1.6.0
+**Version:** 1.6.1
 
 Every install has one Communication VP. The installer sets up its folder (`Context/Communication_VP/` under the data
 folder) with the same five training files as a COO, plus its own configuration in `Context/Communication_VP/comms/`.
