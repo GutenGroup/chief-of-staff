@@ -76,3 +76,13 @@ test('"sign X; delete Y" is two asks, and an id like #380 joins repeats of one a
   const asks = parseReport(text, 'Acme.md', NOW, '').actions.map(a => a.ask)
   assert.deepEqual(asks, ['delete drafts #380/#381? (recommended yes; alt: leave)', 'sign GGU-1001 and GGU-1002'])
 })
+
+test('numbered options are one card showing the recommended option', () => {
+  const text = '- 2026-11-26T12:20Z | status: amber | needs-owner: Sam, options: (1, recommended) sign in once in the bot chat, which unblocks the connect; (2) do the connects yourself (about 10 min); (3) hold until later'
+  const acts = parseReport(text, 'Ops.md', NOW, 'Sam').actions
+  assert.equal(acts.length, 1)
+  assert.equal(acts[0]!.ask, 'sign in once in the bot chat, which unblocks the connect')
+  assert.match(acts[0]!.details, /\(2\) do the connects yourself.*\(3\) hold until later/)
+  const unmarked = parseReport('- 2026-11-26T12:20Z | needs-owner: (1) renew now; (2) wait a week', 'Ops.md', NOW, '').actions
+  assert.deepEqual(unmarked.map(a => a.ask), ['renew now'])
+})

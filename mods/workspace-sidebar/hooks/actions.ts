@@ -101,10 +101,14 @@ export function parseReport(text: string, file: string, now: number, owner: stri
     if (CLEARS.test(value)) { clears.push(at); continue }
     if (!value || NONE.test(value)) continue
     const parts = value.split(/\s+\|\s+/)
-    for (const piece of splitAsks((parts[0] || '').replace(/[`"]+$/, '').trim())) {
+    const first = (parts[0] || '').replace(/[`"]+$/, '').trim()
+    const pick = recommended(first)
+    const pieces = pick ? [pick] : splitAsks(first)
+    for (const piece of pieces) {
       if (piece.length < 4) continue
+      const details = [pick ? first : '', ...parts.slice(1)].filter(Boolean).join(' | ')
       actions.push({
-        key: `${name}:${normKey(piece)}`, source: name, ask: piece, details: parts.slice(1).join(' | '), at,
+        key: `${name}:${normKey(piece)}`, source: name, ask: piece, details, at,
         links: linksIn(`${piece} ${parts.slice(1).join(' ')}`, dataRoot, home),
       })
     }
@@ -112,6 +116,15 @@ export function parseReport(text: string, file: string, now: number, owner: stri
   const lastClear = Math.max(0, ...clears)
   const open = dedupe(actions.filter(a => a.at > lastClear)).slice(0, PER_REPORT)
   return { actions: open, latest }
+}
+
+// One ask offered as numbered options, "(1, recommended) X; (2) Y; (3) hold": one card, the recommended option as
+// the ask (the first option when none is marked) and the whole line as details. Never split it.
+export function recommended(ask: string): string {
+  const opts = [...ask.matchAll(/\((\d)(,\s*recommended)?\)\s*([^;]+?)(?=;\s*\(\d[,)]|$)/gi)]
+  if (opts.length < 2) return ''
+  const rec = opts.find(o => o[2]) || opts[0]
+  return (rec?.[3] || '').replace(/[;,.\s]+$/, '').trim()
 }
 
 // "sign X; delete Y" is two asks. Split on "; " outside brackets, unless the next part continues the first.
