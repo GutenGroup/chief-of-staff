@@ -2,14 +2,18 @@ import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 import type { Brief, Row, Snapshot, Waiting } from '../types'
-import { LOGOS } from './logos'
+import { dedupe, isReportFile, parseReport, reportName, visible } from './actions'
+import type { Action, CooLine, Mark } from './actions'
 
+// The Workspace panel shows two things only (owner's order 2026-11-26: "your actions only"):
+//   1. every action waiting on the owner, each with one-click buttons (open the link, Done, Later);
+//   2. one line per COO with its latest outcome and how fresh it is.
+// Sources: the Chief of Staff brief (needsOwner), sessions that asked a question (index.json),
+// and every `needs-owner:` / `needs-<owner name>:` line from the last 24 h in the COO report files.
 const PANE = 'workspace-sidebar'
 const TITLE = 'Workspace'
-const PREVIEW = 4
-// Virtual section: the newest top-level sessions from any group, like the app's Recents.
-const LATEST = '__latest'
-const LATEST_COUNT = 6
+const STALE_MS = 60 * 60000 // a COO report older than this shows red
+const LATER_MS = 3 * 3600e3 // "Later" hides an action for 3 hours
 // The Chief of Staff session is found by title (it may carry stars or bold letters).
 const plainTitle = (t: string) => t.normalize('NFKD').replace(/[^A-Za-z ]/g, '').replace(/\s+/g, ' ').trim().toLowerCase()
 // Title is "⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐" (NFKD turns the bold letters into 'chief of staff'); the older plain "Chief of Staff" and
@@ -18,28 +22,23 @@ let storedCosId = ''
 const isCos = (r: Row) => (!!storedCosId && r.id === storedCosId) || ['chief of staff', 'cos chief of staff'].includes(plainTitle(r.title))
 const cosRow = (rows: Row[]) => rows.filter(isCos).sort((a, b) => (a.at < b.at ? 1 : -1))[0]
 
-const snap = atom({ plugin: 'workspace-sidebar', key: 'snap' } as const, { rows: [], error: '', fetchedAt: 0, waiting: [], flagNote: '' } as Snapshot, {
-  shape: 'snap-3',
-})
-const open = atom({ plugin: 'workspace-sidebar', key: 'open' } as const, [] as string[], { shape: 'open-1' })
+const snap = atom({ plugin: 'workspace-sidebar', key: 'snap' } as const,
+  { rows: [], error: '', fetchedAt: 0, waiting: [], flagNote: '', actions: [], coos: [] } as Snapshot, { shape: 'snap-4' })
 
-// Sidebar group name -> [tier, clean display name]. Order here is display order.
-// The project tiers come from ~/.claude/needs-input/sidebar.json (written by install.sh from your config):
-// {"tiers":[{"tier":"Projects","sections":["Acme","Side project"]}]}. A group name is shown with or without
-// a leading emoji: sections "Acme" matches the sidebar group "🟦 Acme" and "Acme".
-const TODAY = { tier: 'Today', sections: [['⭐ Chief of Staff', 'Chief of Staff'], [LATEST, 'Latest'], ['🟨 To do', 'To do']] as [string, string][] }
-let TIERS: { tier: string; sections: [string, string][] }[] = [TODAY]
-async function loadTiers($: any) {
+// Panel settings, written by `cos.py sidebar` from the config: where the reports are and whose actions count.
+type Settings = { reportsDir: string; dataRoot: string; ownerName: string; projects: string[]; tickGate: string[] }
+let settings: Settings = { reportsDir: '', dataRoot: '', ownerName: '', projects: [], tickGate: [] }
+async function loadSettings($: any) {
   try {
-    const cfg = JSON.parse(String(await $.fs.read(`${flagDir($)}/sidebar.json`)))
-    const extra = (cfg?.tiers || []).map((t: any) => ({
-      tier: String(t.tier || 'Projects'),
-      sections: (t.sections || []).map((n: any) => [`🟦 ${String(n)}`, String(n)] as [string, string]),
-    }))
-    TIERS = [TODAY, ...extra]
-  } catch {
-    TIERS = [TODAY]
-  }
+    const j = JSON.parse(String(await $.fs.read(`${flagDir($)}/sidebar.json`)))
+    settings = {
+      reportsDir: String(j.reportsDir || ''),
+      dataRoot: String(j.dataRoot || ''),
+      ownerName: String(j.ownerName || ''),
+      projects: Array.isArray(j.projects) ? j.projects.map(String) : (j.tiers?.[0]?.sections || []).map(String),
+      tickGate: Array.isArray(j.tickGate) ? j.tickGate.map(String) : [],
+    }
+  } catch {}
 }
 
 const textOf = (content: unknown): string =>
@@ -280,6 +279,117 @@ async function drainRelay($: any) {
 // titled "⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐" (or the older plain title) is idle, the first mod instance to write cos-tick.json
 // (a 25-min guard stops repeats) sends it a one-line wake sentence. Never a bare
 // "/chief-of-staff": peer-bare-command-drop.sh blocks bare slash commands and shows you an error card.
+
+// ── Owner actions and COO lines from the report files ───────────────────────
+// Parsed files are cached by modification time, so a minute tick reads only what changed.
+const cache = new Map<string, { mtime: number; actions: Action[]; latest: CooLine | null }>()
+let reportNote = ''
+async function readReports($: any): Promise<{ actions: Action[]; coos: CooLine[] }> {
+  const dir = settings.reportsDir
+  if (!dir) { reportNote = 'No reports folder set: run cos.py sidebar'; return { actions: [], coos: [] } }
+  let entries: any[] = []
+  try { entries = await $.fs.list(dir) } catch (err) {
+    reportNote = `Couldn't list ${dir}: ${String((err as Error)?.message || err)}`
+    return { actions: [], coos: [] }
+  }
+  reportNote = ''
+  const now = Date.now()
+  const actions: Action[] = []
+  const newest = new Map<string, CooLine>()
+  for (const f of entries) {
+    if (f.kind !== 'file' || !isReportFile(String(f.name))) continue
+    const name = String(f.name)
+    let hit = cache.get(name)
+    if (!hit || hit.mtime !== f.mtimeMs) {
+      try {
+        const text = String(await $.fs.read(`${dir}/${name}`))
+        const p = parseReport(text, name, now, settings.ownerName, settings.dataRoot, home)
+        hit = { mtime: f.mtimeMs, ...p }
+        cache.set(name, hit)
+      } catch { continue }
+    }
+    // Actions are re-dated on every tick only through a fresh parse; drop ones past 24 h here.
+    actions.push(...hit.actions.filter(a => now - a.at <= 24 * 3600e3))
+    if (hit.latest) {
+      // Freshness = when the COO last wrote the file.
+      const line = { ...hit.latest, at: Math.min(f.mtimeMs, now) }
+      const was = newest.get(line.name)
+      if (!was || line.at > was.at) newest.set(line.name, line)
+    }
+  }
+  const wanted = new Set([...settings.projects, 'Production', 'Communication_VP'])
+  const coos = [...newest.values()].filter(l => !settings.projects.length || wanted.has(l.name)).sort((a, b) => b.at - a.at)
+  return { actions, coos }
+}
+
+async function readMarks($: any): Promise<Record<string, Mark>> {
+  try { return JSON.parse(String(await $.fs.read(`${flagDir($)}/owner-actions.json`))) || {} } catch { return {} }
+}
+async function mark($: any, a: Action, state: 'done' | 'later') {
+  try {
+    const marks = await readMarks($)
+    marks[a.key] = { state, at: new Date().toISOString(), ...(state === 'later' ? { until: Date.now() + LATER_MS } : {}) }
+    // Keep the file small: forget marks older than a week.
+    for (const [k, m] of Object.entries(marks)) if (Date.now() - Date.parse(m.at) > 7 * 24 * 3600e3) delete marks[k]
+    await $.fs.write(`${flagDir($)}/owner-actions.json`, JSON.stringify(marks, null, 1))
+    if (state === 'done') {
+      const cos = cosRow((await read($, snap)).rows)
+      const me = String(await $.session.id()).replace(/^local_/, '')
+      if (cos && cos.id.replace(/^local_/, '') !== me)
+        await $.mcp.call('ccd_session_mgmt', 'send_message', { session_id: cos.id, message: `The owner marked done on the Workspace panel [${a.source}]: "${a.ask}"` })
+    }
+    if (a.source === 'brief' || a.source === 'session') {
+      const dir = flagDir($)
+      if (a.source === 'brief') {
+        const brief = JSON.parse(String(await $.fs.read(`${dir}/cos-brief.json`)))
+        brief.needsOwner = (brief.needsOwner || []).filter((x: any) => `brief:${x.id}:${x.ask}` !== a.key)
+        await $.fs.write(`${dir}/cos-brief.json`, JSON.stringify(brief, null, 1))
+      } else if (state === 'done' && a.sessionId) {
+        const idx = JSON.parse(String(await $.fs.read(`${dir}/index.json`)))
+        delete idx[a.sessionId]
+        await $.fs.write(`${dir}/index.json`, JSON.stringify(idx))
+      }
+    }
+  } catch {}
+  await refresh($)
+}
+
+// Every open action, newest first: brief items, then waiting sessions, then report lines.
+function collect(rows: Row[], waiting: Waiting[], cos: Brief | null | undefined, fromReports: Action[]): Action[] {
+  const now = Date.now()
+  const byId = new Map(rows.map(r => [r.id, r] as [string, Row]))
+  const brief: Action[] = (cos?.needsOwner || []).map(q => ({
+    key: `brief:${q.id}:${q.ask}`, source: 'brief', ask: q.ask, details: q.details || '', at: Date.parse(cos!.generatedAt) || now,
+    links: [], sessionId: q.id, options: q.options, title: q.title, copy: q.copy,
+  } as Action))
+  const asks: Action[] = (waiting || [])
+    .map(w => ({ w, r: byId.get(w.id) }))
+    // a child whose coordinator is still active routes through that coordinator
+    .filter((x): x is { w: Waiting; r: Row } => !!x.r && !(x.r.parent && byId.has(x.r.parent)))
+    .map(({ w, r }) => ({ key: `session:${r.id}:${w.at}`, source: 'session', ask: w.reason, details: '', at: Date.parse(w.at) || now, links: [], sessionId: r.id, title: r.title } as Action))
+  return [...brief, ...asks, ...dedupe(fromReports)]
+}
+
+// The session that wrote a report: "Acme_admin" -> "Acme admin COO"; roles by their title.
+function cooSession(rows: Row[], name: string): Row | undefined {
+  const want = name === 'Production' ? 'production vp' : name === 'Communication_VP' ? 'communication vp' : plainTitle(`${name.replace(/_/g, ' ')} COO`)
+  const first = plainTitle(name.replace(/_/g, ' ')).split(' ')[0] || name.toLowerCase()
+  const pick = (f: (t: string) => boolean) => rows.filter(r => f(plainTitle(r.title))).sort((a, b) => (a.at < b.at ? 1 : -1))[0]
+  return pick(t => t === want || t === `cos ${want}`) || pick(t => /\bcoo$/.test(t) && t.startsWith(first))
+}
+
+async function openTarget($: any, kind: string, target: string, rows: Row[]) {
+  if (kind === 'session') return openSession($, linkFor(rows, target))
+  try { await $.process.run(['open', target]) } catch {}
+}
+
+// ── Chief of Staff ticker ────────────────────────────────────────────────────
+// The loop inside the CoS session dies when it closes or after 7 days. This is the
+// durable wake: every refresh, if the brief is older than COS_STALE_MS and the session
+// titled "⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐" (or the older plain title) is idle, the first mod instance to write cos-tick.json
+// (a 25-min guard stops repeats) sends it a one-line wake sentence. Never a bare
+// "/chief-of-staff": peer-bare-command-drop.sh blocks bare slash commands and shows you an error card.
+// The guard command is cos.py tick-peek unless sidebar.json names another (tickGate).
 const COS_STALE_MS = 35 * 60000
 async function tickCos($: any, rows: Row[], cos: Brief | null) {
   try {
@@ -290,7 +400,8 @@ async function tickCos($: any, rows: Row[], cos: Brief | null) {
     let changed = false
     let changedInputs = ''
     try {
-      const gate = await $.process.run(['python3', `${home}/.claude/chief-of-staff/bin/cos.py`, 'tick-peek'])
+      const cmd = settings.tickGate.length ? settings.tickGate : ['python3', `${home}/.claude/chief-of-staff/bin/cos.py`, 'tick-peek']
+      const gate = await $.process.run(cmd)
       if (String(gate?.stdout || '').startsWith('SKIP:')) return
       changedInputs = String(gate?.stdout || '').trim()
       changed = changedInputs.startsWith('RUN: changed')
@@ -323,66 +434,64 @@ async function tickCos($: any, rows: Row[], cos: Brief | null) {
 
 // Your click on an option = your answer. Sent verbatim to the Chief of Staff, then the
 // question leaves the brief and the flag is cleared.
-async function answerQuestion($: any, q: { id: string; title?: string; ask: string }, label: string) {
+async function answerQuestion($: any, a: Action, label: string) {
   try {
-    // A click is your answer, routed to the Chief of Staff, which passes it on.
     const cosTarget = cosRow((await read($, snap)).rows)
     if (!cosTarget) return
-    await $.mcp.call('ccd_session_mgmt', 'send_message', { session_id: cosTarget.id, message: `The owner answered on the Workspace card "${q.title || ''}" (session ${q.id}): "${q.ask}" → ${label}` })
-    const dir = flagDir($)
-    const brief = JSON.parse(String(await $.fs.read(`${dir}/cos-brief.json`)))
-    brief.needsOwner = (brief.needsOwner || []).filter((x: any) => x.id !== q.id || x.ask !== q.ask)
-    await $.fs.write(`${dir}/cos-brief.json`, JSON.stringify(brief, null, 1))
-    const idx = JSON.parse(String(await $.fs.read(`${dir}/index.json`)))
-    delete idx[q.id]
-    await $.fs.write(`${dir}/index.json`, JSON.stringify(idx))
+    await $.mcp.call('ccd_session_mgmt', 'send_message', { session_id: cosTarget.id, message: `The owner answered on the Workspace card "${a.title || ''}" (session ${a.sessionId || ''}): "${a.ask}" → ${label}` })
   } catch {}
-  await refresh($)
+  await mark($, a, 'done')
+}
+
+async function gather($: any, rows: Row[]) {
+  const waiting = await readFlags($, rows)
+  const cos = await readCos($)
+  const rep = await readReports($)
+  const marks = await readMarks($)
+  const actions = visible(collect(rows, waiting, cos, rep.actions), marks, Date.now())
+  const flagNote = [flagError, reportNote].filter(Boolean).join(' · ')
+  return { waiting, cos, actions, coos: rep.coos, flagNote }
 }
 
 async function refresh($: any) {
   await ensureHome($)
-  await loadTiers($)
+  await loadSettings($)
   const got = await loadSessions($)
-  const waiting = await readFlags($, got.rows || (await read($, snap)).rows)
-  const cos = await readCos($)
-  const flagNote = flagError || `${waiting.length} flag(s) in ${flagDir($)}`
-  await update($, snap, prev => ({ ...prev, ...got, waiting, flagNote, cos }))
-  if (got.rows) await exportSessions($, got.rows, waiting)
+  const rows = got.rows || (await read($, snap)).rows
+  const g = await gather($, rows)
+  await update($, snap, prev => ({ ...prev, ...got, ...g }))
+  if (got.rows) await exportSessions($, got.rows, g.waiting)
   await drainRelay($)
-  await tickCos($, got.rows || (await read($, snap)).rows, cos)
+  await tickCos($, rows, g.cos)
 }
 
-const ago = (iso: string, now: number) => {
-  const t = Date.parse(iso)
-  if (!t) return ''
-  const m = Math.max(0, Math.round((now - t) / 60000))
+const ago = (ms: number, now: number) => {
+  if (!ms) return ''
+  const m = Math.max(0, Math.round((now - ms) / 60000))
   if (m < 60) return `${m}m`
   const h = Math.round(m / 60)
   return h < 48 ? `${h}h` : `${Math.round(h / 24)}d`
 }
+const pretty = (name: string) => name === 'Communication_VP' ? 'Communication VP' : name === 'Production' ? 'Production VP' : name.replace(/_/g, ' ')
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'workspace', description: 'Open the tiered Workspace panel' })
+    await $.command.register({ name: 'workspace', description: 'Open the Workspace panel: your actions and every COO' })
     void $.ui.open({ id: PANE, title: TITLE })
     void fileUnderParent($)
     await refresh($)
-    // Flags every minute (cheap); the full session list every fifth tick.
+    // Actions and COO lines every minute (cached by file time); the session list every fifth tick.
     let tick = 0
     $.clock.every(60000, async () => {
       tick += 1
       if (tick % 5 === 0) return refresh($)
       await drainRelay($)
-      const waiting = await readFlags($, (await read($, snap)).rows)
-      const cos = await readCos($)
-      const flagNote = flagError || `${waiting.length} flag(s) in ${flagDir($)}`
-      await update($, snap, prev => ({ ...prev, waiting, flagNote, cos }))
-      await tickCos($, (await read($, snap)).rows, cos) // every minute, so a self-clear wakes within ~2 min
+      const g = await gather($, (await read($, snap)).rows)
+      await update($, snap, prev => ({ ...prev, ...g }))
+      await tickCos($, (await read($, snap)).rows, g.cos) // every minute, so a self-clear wakes within ~2 min
     })
     return next(e)
   })
-
   on('turn.complete', async ($, e, next) => {
     const done = await next(e)
     await refresh($)
@@ -431,237 +540,105 @@ export const register: Register = on => {
     return next(e)
   })
 
+
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const els = $.ui.resolve(e)
-    const { Box, Text, Button } = els
-    const Svg = 'Svg' in els ? els.Svg : undefined
-    const { rows, error, fetchedAt, waiting, flagNote, cos } = await read($, snap)
-    const expanded = await read($, open)
+    const { Box, Text, Button } = $.ui.resolve(e)
+    const { rows, error, fetchedAt, actions, coos, flagNote, cos } = await read($, snap)
     const now = Date.now()
+    const list = actions || []
 
-    const byGroup = new Map<string, Row[]>()
-    for (const r of rows) {
-      const list = byGroup.get(r.group) || []
-      list.push(r)
-      byGroup.set(r.group, list)
+    const card = (a: Action, i: number) => {
+      const asker = a.source === 'brief' || a.source === 'session' ? (a.title || 'Chief of Staff') : pretty(a.source)
+      const coo = a.source !== 'brief' && a.source !== 'session' ? cooSession(rows, a.source) : undefined
+      const who = a.sessionId ? { kind: 'session', target: a.sessionId } : coo ? { kind: 'session', target: coo.id } : null
+      return (
+        <Box key={`act-${i}-${a.key.slice(0, 40)}`} flexDirection="column" gap="xs" padding="sm" borderStyle="round" borderColor="warning">
+          <Box flexDirection="row" justifyContent="space-between" gap="sm">
+            <Text size="footnote" weight="semibold" color="accent" wrap="truncate">{asker}</Text>
+            <Text size="caption" dimColor>{ago(a.at, now)}</Text>
+          </Box>
+          <Text size="body" weight="semibold">{a.ask}</Text>
+          {a.details ? <Text size="footnote" dimColor wrap="truncate">{a.details}</Text> : null}
+          {a.copy ? (
+            <Button key={`copy-${i}`} onPress={(press: any) => $.ui.copy({ text: a.copy!, surface: press?.surface })}>
+              <Text size="caption" weight="semibold">⧉ Copy: {a.copy.slice(0, 60)}</Text>
+            </Button>
+          ) : null}
+          {(a.options || []).filter(o => !/^later$/i.test(o.label)).map((o, oi) => (
+            <Button key={`pick-${i}-${oi}`} onPress={() => answerQuestion($, a, o.label)}>
+              <Text size="footnote" weight="semibold" color={o.recommended ? 'success' : undefined}>{o.recommended ? '★ ' : '○ '}{o.label}</Text>
+            </Button>
+          ))}
+          <Box flexDirection="row" gap="sm" flexWrap="wrap">
+            {a.links.slice(0, 3).map((l, li) => (
+              <Button key={`link-${i}-${li}`} onPress={() => openTarget($, l.kind, l.target, rows)}>
+                <Text size="footnote" weight="bold" color="accent">{l.label} ›</Text>
+              </Button>
+            ))}
+            {who ? (
+              <Button key={`who-${i}`} onPress={() => openTarget($, who.kind, who.target, rows)}>
+                <Text size="footnote" color="accent">Open {a.source === 'brief' || a.source === 'session' ? 'session' : pretty(a.source)} ›</Text>
+              </Button>
+            ) : null}
+            <Button key={`done-${i}`} onPress={() => mark($, a, 'done')}>
+              <Text size="footnote" weight="semibold" color="success">✓ Done</Text>
+            </Button>
+            <Button key={`later-${i}`} onPress={() => mark($, a, 'later')}>
+              <Text size="footnote" dimColor>Later</Text>
+            </Button>
+          </Box>
+        </Box>
+      )
     }
-    for (const list of byGroup.values()) list.sort((a, b) => (a.at < b.at ? 1 : -1))
-    const ids = new Set(rows.map(r => r.id))
-    byGroup.set(
-      LATEST,
-      rows
-        .filter(r => !(r.parent && ids.has(r.parent)))
-        .sort((a, b) => (a.at < b.at ? 1 : -1))
-        .slice(0, LATEST_COUNT),
-    )
 
-    const known = new Set(TIERS.flatMap(t => t.sections.map(s => s[0])))
-    const other = [...byGroup.keys()].filter(g => !known.has(g))
-    const tiers = [...TIERS]
-    if (other.length) tiers.push({ tier: 'Other', sections: other.map(g => [g, g || 'Ungrouped'] as [string, string]) })
-
-    const waitingIds = new Set((waiting || []).map(w => w.id))
-    const toggle = (name: string) => update($, open, list => (list.includes(name) ? list.filter(n => n !== name) : [...list, name]))
-
+    const cosMe = cosRow(rows)
     return (
       <Box flexDirection="column" gap="md" paddingX="sm">
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
-          <Text size="footnote" dimColor>
-            {rows.length} sessions{fetchedAt ? ` · updated ${ago(new Date(fetchedAt).toISOString(), now) || 'now'} ago` : ''}
-          </Text>
-          <Button key="refresh" onPress={async () => {
-            await refresh($)
-          }}>Refresh</Button>
+          <Text size="footnote" dimColor>{fetchedAt ? `updated ${ago(fetchedAt, now) || 'now'} ago` : 'loading…'}</Text>
+          <Button key="refresh" onPress={() => refresh($)}>Refresh</Button>
         </Box>
         {error ? <Text color="error" size="footnote">Couldn't load sessions: {error}</Text> : null}
-        {(() => {
-          const byId = new Map(rows.map(r => [r.id, r] as [string, Row]))
-          const need = (waiting || [])
-            .map(w => ({ w, r: byId.get(w.id) }))
-            // a child whose coordinator is still active routes through that coordinator
-            .filter((x): x is { w: Waiting; r: Row } => !!x.r && !(x.r.parent && byId.has(x.r.parent)))
-            .sort((a, b) => (a.w.at < b.w.at ? 1 : -1))
-          return (
-            <Box key="needs-input" flexDirection="column" gap="sm" padding={need.length ? 'md' : undefined}
-              borderStyle={need.length ? 'round' : undefined} borderColor={need.length ? 'warning' : undefined}
-              backgroundColor={need.length ? 'rgba(245, 158, 11, 0.12)' : undefined}>
-              <Text size="title" weight="bold" color={need.length ? 'warning' : undefined}>
-                {need.length ? `🟠 Needs your input · ${need.length}` : '✓ Nothing needs your input'}
-              </Text>
-              {need.length ? null : <Text dimColor wrap="truncate">{'─'.repeat(200)}</Text>}
-              {need.length ? need.map(({ w, r }) => (
-                <Box key={`need-${r.id}`} flexDirection="column" paddingLeft="sm">
-                  <Box flexDirection="row" justifyContent="space-between" gap="sm">
-                    <Button key={`open-need-${r.id}`} onPress={() => openSession($, r.link)}>
-                      <Text size="body" weight="semibold" wrap="truncate">{r.title}</Text>
-                    </Button>
-                    <Text size="caption" dimColor>{ago(w.at, now)}</Text>
-                  </Box>
-                  <Text size="footnote" dimColor wrap="truncate">{w.reason}</Text>
-                </Box>
-              )) : null}
-              <Text size="caption" dimColor>{flagNote}</Text>
-            </Box>
-          )
-        })()}
-        {cos ? (
-          <Box key="cos" flexDirection="column" gap="xs" padding="md" borderStyle="round" borderColor="accent">
-            <Box flexDirection="row" justifyContent="space-between">
-              {(() => {
-                // Title opens the Chief of Staff session itself (newest one with that title).
-                const me = rows.filter(isCos).sort((a, b) => (a.at < b.at ? 1 : -1))[0]
-                return (
-                  <Button key="open-cos-session" onPress={() => openSession($, me?.link || '')}>
-                    <Text size="title" weight="bold" color="accent">⭐ {me?.running ? '● ' : ''}Chief of Staff ›</Text>
-                  </Button>
-                )
-              })()}
-              <Text size="caption" dimColor>{ago(cos.generatedAt, now)} ago</Text>
-            </Box>
-            <Text size="body">{cos.headline}</Text>
-            {(cos.needsOwner || []).map((q, qi) => (
-              <Box key={`ask-${q.id}-${qi}`} flexDirection="column" gap="xs" padding="sm" borderStyle="round" borderColor="warning">
-                <Button key={`open-ask-${q.id}-${qi}`} onPress={() => openSession($, linkFor(rows, q.id))}>
-                  <Text size="footnote" weight="semibold" color="accent">{q.title} ›</Text>
+        <Box key="actions" flexDirection="column" gap="sm" padding={list.length ? 'md' : undefined}
+          borderStyle={list.length ? 'round' : undefined} borderColor={list.length ? 'warning' : undefined}
+          backgroundColor={list.length ? 'rgba(245, 158, 11, 0.12)' : undefined}>
+          <Text size="title" weight="bold" color={list.length ? 'warning' : undefined}>
+            {list.length ? `🟠 Waiting on you · ${list.length}` : '✓ Nothing waiting on you'}
+          </Text>
+          {list.map(card)}
+          {flagNote ? <Text size="caption" color="error">{flagNote}</Text> : null}
+        </Box>
+        <Box key="coos" flexDirection="column" gap="sm">
+          <Text size="title" weight="bold">COOs</Text>
+          {cos ? (
+            <Box key="coo-cos" flexDirection="column" paddingLeft="sm">
+              <Box flexDirection="row" justifyContent="space-between" gap="sm">
+                <Button key="open-cos" onPress={() => openSession($, cosMe?.link || '')}>
+                  <Text size="body" weight="semibold" color="accent">⭐ Chief of Staff</Text>
                 </Button>
-                <Text size="body" weight="semibold">{q.ask}</Text>
-                {q.details ? <Text size="footnote">{q.details}</Text> : null}
-                {q.copy ? (
-                  <Box key={`copy-${q.id}-${qi}`} flexDirection="column" gap="xs" padding="sm" borderStyle="round" borderColor="secondary">
-                    <Text size="footnote" mono>{q.copy}</Text>
-                    <Button key={`copy-btn-${q.id}-${qi}`} onPress={(press: any) => $.ui.copy({ text: q.copy!, surface: press?.surface })}>
-                      <Text size="caption" weight="semibold">⧉ Copy</Text>
-                    </Button>
-                  </Box>
-                ) : null}
-                {(q.options || []).map((o, oi) => (
-                  <Box key={`ask-${q.id}-${qi}-${oi}`} flexDirection="column" paddingLeft="sm">
-                    <Button key={`pick-${q.id}-${qi}-${oi}`} onPress={() => answerQuestion($, q, o.label)}>
-                      <Text size="body" weight="semibold" color={o.recommended ? 'success' : undefined}>{o.recommended ? '★ ' : '○ '}{o.label}{o.recommended ? ' (Recommended)' : ''}</Text>
-                    </Button>
-                    <Text size="footnote" dimColor>{o.why}</Text>
-                  </Box>
-                ))}
+                <Text size="caption" color={now - Date.parse(cos.generatedAt) > STALE_MS ? 'error' : undefined} dimColor={now - Date.parse(cos.generatedAt) <= STALE_MS}>
+                  {ago(Date.parse(cos.generatedAt), now)}
+                </Text>
               </Box>
-            ))}
-            {(cos.cooking || []).map(c => {
-              const bare = String(c.id || '').replace(/^local_/, '')
-              const r = bare ? rows.find(x => x.id.replace(/^local_/, '').startsWith(bare)) : undefined
-              return (
-                <Box key={`cos-${c.id}`} flexDirection="column" paddingLeft="sm">
-                  <Button key={`open-cos-${c.id}`} onPress={() => openSession($, linkFor(rows, c.id))}>
-                    <Text size="footnote" weight="semibold" color="accent" wrap="truncate">{r?.running ? '● ' : ''}{c.title} ›</Text>
+              <Text size="footnote">{cos.headline}</Text>
+            </Box>
+          ) : null}
+          {(coos || []).map(c => {
+            const s = cooSession(rows, c.name)
+            const stale = now - c.at > STALE_MS
+            return (
+              <Box key={`coo-${c.name}`} flexDirection="column" paddingLeft="sm">
+                <Box flexDirection="row" justifyContent="space-between" gap="sm">
+                  <Button key={`open-coo-${c.name}`} onPress={() => openSession($, s?.link || '')}>
+                    <Text size="body" weight="semibold" color={s?.running ? 'success' : undefined}>{s?.running ? '● ' : ''}{pretty(c.name)}</Text>
                   </Button>
-                  <Text size="footnote" dimColor>{c.status}</Text>
-                  {c.details ? <Text size="footnote">{c.details}</Text> : null}
+                  <Text size="caption" color={stale ? 'error' : undefined} dimColor={!stale}>{stale ? '● ' : ''}{ago(c.at, now)}</Text>
                 </Box>
-              )
-            })}
-          </Box>
-        ) : null}
-        {(() => {
-          // Coordinators: top-level sessions that started other sessions, busiest first.
-          const kids = new Map<string, Row[]>()
-          for (const r of rows) if (r.parent && ids.has(r.parent)) kids.set(r.parent, [...(kids.get(r.parent) || []), r])
-          // A worker the CoS detached and filed in its project's group counts under that group's COO.
-          const isCoo = (r: Row) => /\bCOO\b/.test(r.title)
-          for (const c of rows.filter(r => isCoo(r) && r.group && !(r.parent && ids.has(r.parent)))) {
-            const have = new Set((kids.get(c.id) || []).map(k => k.id))
-            const extra = rows.filter(r => r.group === c.group && r.id !== c.id && !have.has(r.id) && !isCoo(r) && !isCos(r) && !(r.parent && ids.has(r.parent)))
-            if (extra.length) kids.set(c.id, [...(kids.get(c.id) || []), ...extra])
-          }
-          const coords = rows
-            .filter(r => kids.has(r.id) && !(r.parent && ids.has(r.parent)))
-            .map(r => ({ r, k: kids.get(r.id)! }))
-            .map(x => ({ ...x, live: x.k.filter(k => k.running).length, wait: x.k.filter(k => waitingIds.has(k.id)).length, last: [x.r.at, ...x.k.map(k => k.at)].sort().pop() || '' }))
-            .sort((a, b) => (b.live - a.live) || (a.last < b.last ? 1 : -1))
-            .slice(0, 8)
-          if (!coords.length) return null
-          return (
-            <Box key="coords" flexDirection="column" gap="sm">
-              <Text size="title" weight="bold">Coordinators</Text>
-              <Text dimColor wrap="truncate">{'─'.repeat(200)}</Text>
-              {coords.map(({ r, k, live, wait, last }) => (
-                <Box key={`coord-${r.id}`} flexDirection="column" paddingLeft="sm">
-                  <Box flexDirection="row" justifyContent="space-between" gap="sm">
-                    <Button key={`open-coord-${r.id}`} onPress={() => openSession($, r.link)}>
-                      <Text size="body" weight="semibold" wrap="truncate" color={waitingIds.has(r.id) ? 'warning' : r.running ? 'success' : undefined}>
-                        {waitingIds.has(r.id) ? '🟠 ' : r.running ? '● ' : ''}{r.title}
-                      </Text>
-                    </Button>
-                    <Text size="caption" dimColor>{ago(last, now)}</Text>
-                  </Box>
-                  <Text size="footnote" dimColor>
-                    {(r.group.replace(/^\S+\s/, '') || 'Ungrouped')} · {k.length} sessions{live ? ` · ${live} running` : ''}{wait ? ` · ${wait} waiting` : ''}
-                  </Text>
-                  {k.filter(c => c.running || waitingIds.has(c.id)).slice(0, 4).map(c => (
-                    <Button key={`open-kid-${c.id}`} onPress={() => openSession($, c.link)}>
-                      <Text size="footnote" wrap="truncate" color={waitingIds.has(c.id) ? 'warning' : 'success'}>
-                        {'   '}{waitingIds.has(c.id) ? '🟠 ' : '● '}{c.title}
-                      </Text>
-                    </Button>
-                  ))}
-                </Box>
-              ))}
-            </Box>
-          )
-        })()}
-        {tiers.map(t => {
-          const present = t.sections.filter(([g]) => (byGroup.get(g) || []).length > 0)
-          if (!present.length) return null
-          return (
-            <Box key={`tier-${t.tier}`} flexDirection="column" gap="sm">
-              <Text size="title" weight="bold">{t.tier}</Text>
-              <Text dimColor wrap="truncate">{'─'.repeat(200)}</Text>
-              {present.map(([g, label]) => {
-                const list = byGroup.get(g) || []
-                const all = expanded.includes(g)
-                const ordered = [...list.filter(r => waitingIds.has(r.id)), ...list.filter(r => !waitingIds.has(r.id))]
-                const shown = all || g === LATEST ? ordered : ordered.slice(0, PREVIEW)
-                const live = list.filter(r => r.running).length
-                return (
-                  <Box key={`sec-${g}`} flexDirection="column" gap="xs" paddingLeft="sm">
-                    <Box flexDirection="row" justifyContent="space-between" alignItems="center">
-                      {(() => {
-                        const logo = LOGOS[label]
-                        if (!logo || !Svg) return <Text size="heading" weight="semibold">{label}</Text>
-                        const ht = logo.ratio > 1.5 ? 20 : 22
-                        const mark = <Svg source={logo.svg} alt={label} height={ht} width={Math.round(ht * logo.ratio)} />
-                        return logo.ratio > 1.5 ? mark : (
-                          <Box flexDirection="row" alignItems="center" gap="sm">
-                            {mark}
-                            <Text size="heading" weight="semibold">{label}</Text>
-                          </Box>
-                        )
-                      })()}
-                      <Text size="footnote" dimColor>
-                        {list.some(r => waitingIds.has(r.id)) ? `🟠 ${list.filter(r => waitingIds.has(r.id)).length} waiting · ` : ''}
-                        {live ? `${live} running · ` : ''}{list.length}
-                      </Text>
-                    </Box>
-                    {shown.map(r => (
-                      <Box key={`row-${r.id}`} flexDirection="row" justifyContent="space-between" paddingLeft="sm" gap="sm">
-                        <Button key={`open-${r.id}`} onPress={() => openSession($, r.link)}>
-                          <Text size={isCos(r) ? 'body' : 'footnote'} wrap="truncate" weight={waitingIds.has(r.id) || isCos(r) ? 'bold' : undefined}
-                            color={waitingIds.has(r.id) ? 'warning' : isCos(r) ? 'accent' : r.running ? 'success' : undefined}>
-                            {waitingIds.has(r.id) ? '🟠 ' : r.running ? '● ' : ''}
-                            {r.title}
-                          </Text>
-                        </Button>
-                        <Text size="caption" dimColor>{ago(r.at, now)}</Text>
-                      </Box>
-                    ))}
-                    {list.length > PREVIEW && g !== LATEST ? (
-                      <Button key={`more-${g}`} onPress={() => toggle(g)}>
-                        <Text size="footnote" dimColor>{all ? 'Show less' : `Show all ${list.length}`}</Text>
-                      </Button>
-                    ) : null}
-                  </Box>
-                )
-              })}
-            </Box>
-          )
-        })}
+                <Text size="footnote" dimColor wrap="truncate">{c.outcome}</Text>
+              </Box>
+            )
+          })}
+        </Box>
       </Box>
     )
   })

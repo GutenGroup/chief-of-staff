@@ -13,7 +13,7 @@
     {
       "name": "workspace-sidebar",
       "source": "./mods/workspace-sidebar",
-      "description": "Optional Claude desktop app panel: sessions grouped by COO, the Chief of Staff brief, and decision cards."
+      "description": "Optional Claude desktop app panel: every action waiting on you (Open, Done, Later) and one line per COO with its latest outcome."
     }
   ]
 }

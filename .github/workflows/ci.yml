@@ -27,7 +27,7 @@ jobs:
         run: python3 .github/scripts/build_editions.py --check
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Plugin validation (directory profile)
         run: |
           npm install --global @anthropic-ai/claude-code
@@ -36,6 +36,7 @@ jobs:
         run: |
           python3 -m unittest discover -s tests
           bash tests/test_install.sh
+          node --test tests/test_sidebar_actions.mts
   release:
     needs: check
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip release]')

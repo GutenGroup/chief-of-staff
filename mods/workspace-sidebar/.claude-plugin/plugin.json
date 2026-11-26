@@ -1,7 +1,7 @@
 {
   "name": "workspace-sidebar",
-  "version": "1.0.0",
-  "description": "Chief of Staff Workspace panel: sessions grouped by project tier, the brief, and owner-input cards",
+  "version": "2.0.0",
+  "description": "Chief of Staff Workspace panel: every action waiting on you (open, Done, Later) and one line per COO with its latest outcome",
   "types": "./types/index.d.ts",
   "author": {
     "name": "Guten Group"

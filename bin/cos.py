@@ -328,9 +328,24 @@ def cmd_savings(rest):
 
 
 def write_sidebar(projects=None):
+    """The Workspace panel's settings: where the COO reports live, whose actions to collect,
+    and (optional) the tick guard command and the outside relay."""
     projects = C.PROJECTS if projects is None else projects
-    data = {"tiers": [{"tier": "Projects", "sections": list(projects)}] if projects else []}
+    data = {
+        "tiers": [{"tier": "Projects", "sections": list(projects)}] if projects else [],
+        "projects": list(projects),
+        "reportsDir": os.path.join(C.FLEET, "coo-reports"),
+        "dataRoot": C.ROOT,
+        "ownerName": C.CONFIG.get("owner_name") or "",
+    }
+    gate = C.CONFIG.get("sidebar_tick_gate")
+    if gate:
+        import shlex
+        data["tickGate"] = [os.path.expanduser(a) for a in shlex.split(str(gate))]
     atomic_write(os.path.join(FLAGS, "sidebar.json"), json.dumps(data, indent=1))
+    relay = os.path.join(FLAGS, "relay-on")
+    if C.CONFIG.get("sidebar_relay") is True and not os.path.exists(relay):
+        open(relay, "w").close()
 
 
 def cmd_sidebar():

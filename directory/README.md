@@ -6,4 +6,4 @@ Communication VP, the project COO and the Helm operating model, three commands a
 This edition has no scripts and no hooks. The full system (the `cos` command, the job runner, the session hooks and the
 optional Workspace panel) is installed from the main repository: https://github.com/GutenGroup/chief-of-staff#readme.
 
-Version 1.5.6. License: MIT. Made by Guten Group, https://guten.group/ai/chief-of-staff/
+Version 1.6.0. License: MIT. Made by Guten Group, https://guten.group/ai/chief-of-staff/
