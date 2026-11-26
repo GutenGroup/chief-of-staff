@@ -1,7 +1,7 @@
 // Workspace panel parsing. Run: node --test tests/test_sidebar_actions.mts (Node 23.6+ strips the types).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { dedupe, isReportFile, linksIn, parseReport, visible } from '../mods/workspace-sidebar/hooks/actions.ts'
+import { dedupe, holdsLease, isReportFile, linksIn, parseReport, tickDue, visible } from '../mods/workspace-sidebar/hooks/actions.ts'
 
 const NOW = Date.parse('2026-11-26T13:00:00Z')
 const SID = ['local', '0a1b2c3d-1111-2222-3333-444455556666'].join('_') // a session id, built so the release scan passes
@@ -85,4 +85,15 @@ test('numbered options are one card showing the recommended option', () => {
   assert.match(acts[0]!.details, /\(2\) do the connects yourself.*\(3\) hold until later/)
   const unmarked = parseReport('- 2026-11-26T12:20Z | needs-owner: (1) renew now; (2) wait a week', 'Ops.md', NOW, '').actions
   assert.deepEqual(unmarked.map(a => a.ask), ['renew now'])
+})
+
+test('Chief of Staff ticks: one sending session, none within 5 min of the last', () => {
+  const at = (ms: number) => new Date(NOW - ms).toISOString()
+  assert.equal(holdsLease({}, 'a', NOW), true) // nobody holds it yet
+  assert.equal(holdsLease({ by: 'local_a', at: at(60e3) }, 'a', NOW), true) // the holder renews
+  assert.equal(holdsLease({ by: 'a', at: at(60e3) }, 'b', NOW), false) // another live session stays quiet
+  assert.equal(holdsLease({ by: 'a', at: at(4 * 60e3) }, 'b', NOW), true) // the holder closed: take over
+  assert.equal(tickDue({}, NOW), true)
+  assert.equal(tickDue({ at: at(2 * 60e3) }, NOW), false)
+  assert.equal(tickDue({ at: at(6 * 60e3) }, NOW), true)
 })

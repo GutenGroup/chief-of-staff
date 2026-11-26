@@ -177,3 +177,17 @@ export function visible(actions: Action[], marks: Record<string, Mark>, now: num
     return !(m.until && m.until > now)
   })
 }
+
+// ── Chief of Staff tick debounce ─────────────────────────────────────────────
+// Every open session runs this mod. One of them sends ticks: the lease holder, or any
+// session once the holder has gone quiet (closed). And no tick within 5 min of the last.
+export const TICK_FLOOR_MS = 5 * 60000
+export const LEASE_MS = 3 * 60000
+export type Stamp = { by?: string; at?: string }
+const sid = (s?: string) => String(s || '').replace(/^local_/, '')
+export function holdsLease(lease: Stamp, me: string, now: number): boolean {
+  return !lease.by || sid(lease.by) === sid(me) || !(now - Date.parse(lease.at || '') < LEASE_MS)
+}
+export function tickDue(last: Stamp, now: number): boolean {
+  return !(now - Date.parse(last.at || '') < TICK_FLOOR_MS)
+}

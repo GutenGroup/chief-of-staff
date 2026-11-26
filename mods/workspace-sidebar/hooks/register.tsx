@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 import type { Brief, Row, Snapshot, Waiting } from '../types'
-import { dedupe, isReportFile, parseReport, reportName, visible } from './actions'
+import { dedupe, holdsLease, isReportFile, parseReport, reportName, tickDue, visible } from './actions'
 import type { Action, CooLine, Mark } from './actions'
 
 // The Workspace panel shows two things only (owner's order 2026-11-26: "your actions only"):
@@ -390,11 +390,26 @@ async function openTarget($: any, kind: string, target: string, rows: Row[]) {
 // (a 25-min guard stops repeats) sends it a one-line wake sentence. Never a bare
 // "/chief-of-staff": peer-bare-command-drop.sh blocks bare slash commands and shows you an error card.
 // The guard command is cos.py tick-peek unless sidebar.json names another (tickGate).
+// Every session runs this mod: only the holder of cos-ticker.json sends, and never within
+// 5 min of the last tick (cos-tick.json), whatever changed.
 const COS_STALE_MS = 35 * 60000
 async function tickCos($: any, rows: Row[], cos: Brief | null) {
   try {
     const age = cos ? Date.now() - Date.parse(cos.generatedAt) : Infinity
     const dir = flagDir($)
+    const target = cosRow(rows)
+    const me = String(await $.session.id())
+    if (!target || target.id.replace(/^local_/, '') === me.replace(/^local_/, '')) return // the CoS can't wake itself
+    const now = Date.now()
+    const leaseFile = `${dir}/cos-ticker.json`
+    let lease: any = {}
+    try { lease = JSON.parse(String(await $.fs.read(leaseFile))) } catch {}
+    if (!holdsLease(lease, me, now)) return
+    await $.fs.write(leaseFile, JSON.stringify({ by: me, at: new Date(now).toISOString() }))
+    const tok = `${dir}/cos-tick.json`
+    let last: any = {}
+    try { last = JSON.parse(String(await $.fs.read(tok))) } catch {}
+    if (!tickDue(last, now)) return
     // Shared with /loop pass entry: a recent full pass suppresses duplicate wakes,
     // but changed inbox/flags/reports always get through this five-minute guard.
     let changed = false
@@ -415,13 +430,7 @@ async function tickCos($: any, rows: Row[], cos: Brief | null) {
     } catch {}
     const fresh = !!cleared && (!cos || Date.parse(cleared) > Date.parse(cos.generatedAt))
     if (age < COS_STALE_MS && !fresh && !changed) return
-    const target = cosRow(rows)
-    if (!target || target.running) return
-    const me = await $.session.id()
-    if (target.id.replace(/^local_/, '') === String(me).replace(/^local_/, '')) return // can't message itself; another session's mod does it
-    const tok = `${dir}/cos-tick.json`
-    let last: any = {}
-    try { last = JSON.parse(String(await $.fs.read(tok))) } catch {}
+    if (target.running) return
     if (changed && last.inputs === changedInputs) return // identical work was already woken; don't flood while running state catches up
     const bypass = fresh && last.cleared !== cleared // a fresh self-clear skips the 25-min guard once
     if (!bypass && !changed && Date.now() - Date.parse(last.at) < 25 * 60000) return
