@@ -35,6 +35,8 @@ owner -> Chief of Staff -> Production VP     -> product COOs -> workers
   (as a line in that COO's inbox or report, via the Chief of Staff), answer it yourself when the answer is in the
   files and sending is allowed, and surface what needs the owner as a needs-owner item.
 - **You escalate to the Chief of Staff only.** Needs-owner items go in your report file with options, recommended first.
+  Only `needs-owner[legal]:` (sign, accept terms) and `needs-owner[money]:` (pay, buy, move money) reach the owner's
+  panel; an untagged `needs-owner:` line is a question for the Chief of Staff.
 
 ## 2. Every pass
 

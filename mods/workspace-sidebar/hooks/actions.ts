@@ -14,7 +14,7 @@ export type Action = {
   title?: string // brief / session items: who asks
   copy?: string // brief items: text to copy
 }
-export type CooLine = { name: string; outcome: string; at: number }
+export type CooLine = { name: string; outcome: string; at: number; forCos?: string } // forCos: an open untagged ask, for the Chief of Staff
 
 const DAY = 24 * 3600 * 1000
 
@@ -43,9 +43,12 @@ const NONE = /^(none|n\/a|nothing|no\b|resolved|closed|done\b|—|-|\(none)/i
 const CLEARS = /^(none|nothing)\.?\s*$/i
 export const PER_REPORT = 3
 
+// Only a tagged line reaches the owner: needs-owner[legal]: (sign, accept terms) or needs-owner[money]: (pay, buy,
+// move money). An untagged needs-owner line is a question for the Chief of Staff and shows in that COO's row.
+export const OWNER_TAGS = /^(legal|money)$/i
 export function markerFor(owner: string): RegExp {
   const who = ['owner', owner.trim().toLowerCase()].filter(Boolean).map(w => w.replace(/[^a-z0-9]/g, '')).filter(Boolean)
-  return new RegExp(`needs[- ](?:${who.join('|')})\\**\\s*:\\**\\s*`, 'i')
+  return new RegExp(`needs[- ](?:${who.join('|')})(?:\\[([a-z-]+)\\])?\\**\\s*:\\**\\s*`, 'i')
 }
 
 export function normKey(text: string): string {
@@ -80,6 +83,7 @@ export function parseReport(text: string, file: string, now: number, owner: stri
   let ctx = 0 // date of the nearest heading above
   let latest: CooLine | null = null
   const clears: number[] = []
+  const forCos: { ask: string; at: number }[] = []
   for (const raw of text.split('\n')) {
     const line = raw.trim()
     if (!line) continue
@@ -101,6 +105,7 @@ export function parseReport(text: string, file: string, now: number, owner: stri
     if (CLEARS.test(value)) { clears.push(at); continue }
     if (!value || NONE.test(value)) continue
     const parts = value.split(/\s+\|\s+/)
+    if (!OWNER_TAGS.test(m[1] || '')) { forCos.push({ ask: (parts[0] || '').replace(/[`"]+$/, '').trim(), at }); continue }
     const first = (parts[0] || '').replace(/[`"]+$/, '').trim()
     const pick = recommended(first)
     const pieces = pick ? [pick] : splitAsks(first)
@@ -115,6 +120,8 @@ export function parseReport(text: string, file: string, now: number, owner: stri
   }
   const lastClear = Math.max(0, ...clears)
   const open = dedupe(actions.filter(a => a.at > lastClear)).slice(0, PER_REPORT)
+  const ask = forCos.filter(q => q.at > lastClear).sort((a, b) => b.at - a.at)[0]
+  if (latest && ask) latest.forCos = ask.ask
   return { actions: open, latest }
 }
 

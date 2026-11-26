@@ -644,6 +644,7 @@ export const register: Register = on => {
                   <Text size="caption" color={stale ? 'error' : undefined} dimColor={!stale}>{stale ? '● ' : ''}{ago(c.at, now)}</Text>
                 </Box>
                 <Text size="footnote" dimColor wrap="truncate">{c.outcome}</Text>
+                {c.forCos ? <Text size="footnote" color="warning" wrap="truncate">For Chief of Staff: {c.forCos}</Text> : null}
               </Box>
             )
           })}

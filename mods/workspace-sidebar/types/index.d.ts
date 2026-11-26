@@ -4,7 +4,7 @@ export type Action = {
   key: string; source: string; ask: string; details: string; at: number; links: Link[]; sessionId?: string
   options?: { label: string; why: string; recommended?: boolean }[]; title?: string; copy?: string
 }
-export type CooLine = { name: string; outcome: string; at: number }
+export type CooLine = { name: string; outcome: string; at: number; forCos?: string }
 
 export type Row = { id: string; title: string; link: string; group: string; running: boolean; at: string; parent: string }
 export type Waiting = { id: string; reason: string; at: string }

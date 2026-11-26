@@ -146,6 +146,8 @@ verification read. Everything else goes to a worker with a clear done-check.
 6. Coach any miss (section 7).
 7. Update your state file. Write a report line only on change:
    `- <ISO time> | status: ... | done: ... | next: ... | needs-owner: ...`. A pass with no change writes nothing.
+   A line the owner alone can act on is tagged `needs-owner[legal]:` or `needs-owner[money]:`; untagged lines go to the
+   Chief of Staff only.
 
 ## 10. When it stays quiet
 
