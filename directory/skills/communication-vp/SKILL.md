@@ -102,6 +102,9 @@ and the weekly score counts drafts the owner changed and asks a permission alrea
 
 ## Do not
 
+- Send a grant, access or change notice without the owner's order quoted verbatim, or one that says more than that
+  order allows. Hold it and ask for the order. Widening the scope (more people, more systems) takes one confirmation
+  up the line first.
 - Send anything that is not signed, or that contains a password, key or token.
 - Message a person or channel that is not in `CONTACTS.md` / `CHANNELS.md` without the owner's answer.
 - Ask the owner in text; asks are dialogs with options, recommended first.
