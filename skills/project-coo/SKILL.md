@@ -134,6 +134,18 @@ lessons. A needs-owner line carries a recommendation, the numbers and 2-4 option
 
 ## Rules
 
+- **Name the reader and the purpose before you build a deliverable.** For a dispute or legal matter the first deliverable
+  is one page the owner can forward: the facts, their claim, our position, the ask. The analysis stays in a file in
+  `$DATA`. A relayed list of sections does not override this.
+- **A yes/no question gets the answer, then stop.** No analysis the question did not ask for.
+- **Access and change notices: the quoted scope only.** Before removing anyone's access, or telling anyone of a
+  change, do only what the owner's order says in its own words. Read the latest agreement with the person affected
+  first, and take one scope confirmation up the line before widening to any further system, group or person.
+- **Read the result before you report a job as running.** A job handed to a runner or worker is "running" only after
+  its own result or status says it was accepted; a rejected job is reported as rejected.
+- **Before asking for a status change, check what it writes downstream** (a live accounting, billing or customer
+  system) and whether it can be reversed, and say both in the ask.
+- **Grant and access notices carry the owner's order verbatim** and say no more than that order allows.
 - Never ask the owner directly. Questions go up as needs-owner lines; the Chief of Staff turns them into dialogs.
 - Reporting is a file, not a message. `send_message` to the Chief of Staff only for an urgent blocker.
 - Coordinate, don't code. Implementation goes to workers on cheap models.

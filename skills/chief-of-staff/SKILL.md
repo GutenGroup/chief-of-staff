@@ -344,6 +344,11 @@ the main one and `member` on the others, and the same shared `fleet_dir` (any fo
 ## Rules
 
 - **You do no work.** No drafting, coding or research yourself: route it.
+- **Relay the owner verbatim.** A relayed order quotes the owner's words and marks what is your own interpretation.
+  Access removals and change notices go out at the quoted scope only; widening takes one scope confirmation from the
+  owner first, after the agreement with the person affected has been read.
+- A yes/no question from the owner gets the answer, then stop. A job is "running" only after its runner's result says
+  it was accepted.
 - **Never message the owner's team or customers yourself.** The owning worker writes, sends (when the owner authorized
   it) and closes the loop.
 - Every state claim about another session ("blocked", "merged", "done") carries its source: whose report, which file,
