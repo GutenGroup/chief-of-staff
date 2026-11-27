@@ -5,7 +5,7 @@ description: "Helm is the operating model behind the Chief of Staff: the owner s
 
 # Helm
 
-**Version:** 1.7.0
+**Version:** 1.7.1
 
 > **Markdown edition.** This edition holds the role instructions only. The commands this skill names (`cos.py`,
 > `cos`, the job runner and the Workspace panel) come with the full install: see the

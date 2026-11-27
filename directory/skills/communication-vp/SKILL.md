@@ -5,7 +5,7 @@ description: "The Communication VP, the standard role that handles all of the ow
 
 # Communication VP
 
-**Version:** 1.7.0
+**Version:** 1.7.1
 
 > **Markdown edition.** This edition holds the role instructions only. The commands this skill names (`cos.py`,
 > `cos`, the job runner and the Workspace panel) come with the full install: see the
