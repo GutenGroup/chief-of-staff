@@ -60,10 +60,12 @@ then clears it in place. The session keeps its id, title and workers, re-reads i
 Staff clears itself the same way at 150k. Limits, the full sequence and why clearing beats compaction:
 [Operating](OPERATING.md).
 
-## Dialogs, never questions in text
+## Two asks only, never questions in text
 
-Anything that needs you becomes a multiple-choice dialog: 2-4 options, the recommended one first, each with what happens
-and why. If you are away it waits in the panel. Before asking, the system checks your recorded decisions so you are not
+The system runs by the [autonomy contract](AUTONOMY.md): look, decide, do, report with an undo line. Only a `[legal]` or
+`[money]` item reaches you, as a packet with a recommendation, what you agree to, the values checked and one link. If
+you are away it waits in the panel. Workers send blockers to their COO (`needs-coo:`), COOs to the Chief of Staff, who
+decides. Before asking, the system checks your recorded decisions so you are not
 asked twice. Reversible things on your own accounts that you already authorized are done, not asked.
 
 ## Training

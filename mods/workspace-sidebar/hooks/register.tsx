@@ -2,8 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 import type { Brief, Row, Snapshot, Waiting } from '../types'
-import { dedupe, holdsLease, isReportFile, parseReport, reportName, tickDue, visible } from './actions'
-import type { Action, CooLine, Mark } from './actions'
+import { dedupe, holdsLease, isReportFile, parseReport, permissionLine, reportName, shapeDecided, shapePacket, tickDue, undoMessage, visible } from './actions'
+import type { Action, CooLine, Decided, Mark, Packet } from './actions'
 
 // The Workspace panel shows two things only (owner's order 2026-11-26: "your actions only"):
 //   1. every action waiting on the owner, each with one-click buttons (open the link, Done, Later);
@@ -23,7 +23,7 @@ const isCos = (r: Row) => (!!storedCosId && r.id === storedCosId) || ['chief of 
 const cosRow = (rows: Row[]) => rows.filter(isCos).sort((a, b) => (a.at < b.at ? 1 : -1))[0]
 
 const snap = atom({ plugin: 'workspace-sidebar', key: 'snap' } as const,
-  { rows: [], error: '', fetchedAt: 0, waiting: [], flagNote: '', actions: [], coos: [] } as Snapshot, { shape: 'snap-4' })
+  { rows: [], error: '', fetchedAt: 0, waiting: [], flagNote: '', actions: [], coos: [], decided: [], permLine: '' } as Snapshot, { shape: 'snap-5' })
 
 // Panel settings, written by `cos.py sidebar` from the config: where the reports are and whose actions count.
 type Settings = { reportsDir: string; dataRoot: string; ownerName: string; projects: string[]; tickGate: string[] }
@@ -360,7 +360,7 @@ function collect(rows: Row[], waiting: Waiting[], cos: Brief | null | undefined,
   const byId = new Map(rows.map(r => [r.id, r] as [string, Row]))
   const brief: Action[] = (cos?.needsOwner || []).map(q => ({
     key: `brief:${q.id}:${q.ask}`, source: 'brief', ask: q.ask, details: q.details || '', at: Date.parse(cos!.generatedAt) || now,
-    links: [], sessionId: q.id, options: q.options, title: q.title, copy: q.copy,
+    links: [], sessionId: q.id, options: q.options, title: q.title, copy: q.copy, packet: shapePacket(q),
   } as Action))
   const asks: Action[] = (waiting || [])
     .map(w => ({ w, r: byId.get(w.id) }))
@@ -452,6 +452,29 @@ async function answerQuestion($: any, a: Action, label: string) {
   await mark($, a, 'done')
 }
 
+// The Chief of Staff session's permission mode, from permission-modes.json ({ "<session id>": { mode, at } }).
+async function readPermLine($: any): Promise<string> {
+  try {
+    const dir = flagDir($)
+    const st = JSON.parse(String(await $.fs.read(`${dir}/cos-state.json`)))
+    const modes = JSON.parse(String(await $.fs.read(`${dir}/permission-modes.json`)))
+    return permissionLine(modes, String(st.cosSessionId || ''))
+  } catch { return '' }
+}
+
+// Undo on a decided item: tell the Chief of Staff, then drop the item from the brief.
+async function undoDecided($: any, d: Decided) {
+  try {
+    const cosTarget = cosRow((await read($, snap)).rows)
+    if (cosTarget) await $.mcp.call('ccd_session_mgmt', 'send_message', { session_id: cosTarget.id, message: undoMessage(d.id) })
+    const file = `${flagDir($)}/cos-brief.json`
+    const brief = JSON.parse(String(await $.fs.read(file)))
+    brief.decided = (brief.decided || []).filter((x: any) => String(x?.id) !== d.id)
+    await $.fs.write(file, JSON.stringify(brief, null, 1))
+  } catch {}
+  await refresh($)
+}
+
 async function gather($: any, rows: Row[]) {
   const waiting = await readFlags($, rows)
   const cos = await readCos($)
@@ -459,7 +482,7 @@ async function gather($: any, rows: Row[]) {
   const marks = await readMarks($)
   const actions = visible(collect(rows, waiting, cos, rep.actions), marks, Date.now())
   const flagNote = [flagError, reportNote].filter(Boolean).join(' · ')
-  return { waiting, cos, actions, coos: rep.coos, flagNote }
+  return { waiting, cos, actions, coos: rep.coos, flagNote, decided: shapeDecided(cos?.decided), permLine: await readPermLine($) }
 }
 
 async function refresh($: any) {
@@ -552,11 +575,47 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text, Button } = $.ui.resolve(e)
-    const { rows, error, fetchedAt, actions, coos, flagNote, cos } = await read($, snap)
+    const { rows, error, fetchedAt, actions, coos, flagNote, cos, decided, permLine } = await read($, snap)
     const now = Date.now()
     const list = actions || []
 
+    const field = (k: string, label: string, body: string) => body ? (
+      <Box key={k} flexDirection="column">
+        <Text size="caption" weight="semibold" dimColor>{label}</Text>
+        <Text size="footnote">{body}</Text>
+      </Box>
+    ) : null
+    const packetCard = (a: Action, pk: Packet, i: number) => (
+      <Box key={`pkt-${i}-${a.key.slice(0, 40)}`} flexDirection="column" gap="xs" padding="sm" borderStyle="round" borderColor="warning">
+        <Box flexDirection="row" justifyContent="space-between" gap="sm">
+          <Text size="footnote" weight="semibold" color="accent" wrap="truncate">[{pk.tag}] {a.title || 'Chief of Staff'}</Text>
+          <Text size="caption" dimColor>{ago(a.at, now)}</Text>
+        </Box>
+        <Text size="body" weight="semibold">{a.ask}</Text>
+        {field(`rec-${i}`, 'Recommend', pk.recommend)}
+        {pk.agree.length ? field(`agr-${i}`, 'What you agree to', pk.agree.map(x => `• ${x}`).join('\n')) : null}
+        {pk.checked.length ? field(`chk-${i}`, 'Checked', pk.checked.join('; ')) : null}
+        {pk.verify.length ? field(`ver-${i}`, 'Verify', pk.verify.map(v => `${v.label}: ${v.value}`).join('\n')) : null}
+        {pk.link ? (
+          <Button key={`do-${i}`} onPress={() => openTarget($, 'url', pk.link, rows)}>
+            <Text size="footnote" weight="bold" color="success">Do it ›</Text>
+          </Button>
+        ) : null}
+        {field(`aft-${i}`, 'After', pk.after)}
+        {field(`tim-${i}`, 'Time', pk.time)}
+        <Box flexDirection="row" gap="sm">
+          <Button key={`pdone-${i}`} onPress={() => mark($, a, 'done')}>
+            <Text size="footnote" weight="semibold" color="success">✓ Done</Text>
+          </Button>
+          <Button key={`plater-${i}`} onPress={() => mark($, a, 'later')}>
+            <Text size="footnote" dimColor>Later</Text>
+          </Button>
+        </Box>
+      </Box>
+    )
+
     const card = (a: Action, i: number) => {
+      if (a.packet) return packetCard(a, a.packet, i)
       const asker = a.source === 'brief' || a.source === 'session' ? (a.title || 'Chief of Staff') : pretty(a.source)
       const coo = a.source !== 'brief' && a.source !== 'session' ? cooSession(rows, a.source) : undefined
       const who = a.sessionId ? { kind: 'session', target: a.sessionId } : coo ? { kind: 'session', target: coo.id } : null
@@ -617,6 +676,20 @@ export const register: Register = on => {
           {list.map(card)}
           {flagNote ? <Text size="caption" color="error">{flagNote}</Text> : null}
         </Box>
+        {(decided || []).length ? (
+          <Box key="decided" flexDirection="column" gap="xs">
+            <Text size="footnote" dimColor>Decided for you</Text>
+            {(decided || []).map(d => (
+              <Box key={`dec-${d.id}`} flexDirection="row" justifyContent="space-between" alignItems="center" gap="sm">
+                <Text size="caption" dimColor wrap="truncate">{d.title}{d.why ? ` · ${d.why}` : ''}</Text>
+                <Button key={`undo-${d.id}`} onPress={() => undoDecided($, d)}>
+                  <Text size="caption" dimColor>Undo</Text>
+                </Button>
+              </Box>
+            ))}
+          </Box>
+        ) : null}
+        {permLine ? <Text key="perm" size="caption" color="warning">{permLine}</Text> : null}
         <Box key="coos" flexDirection="column" gap="sm">
           <Text size="title" weight="bold">COOs</Text>
           {cos ? (

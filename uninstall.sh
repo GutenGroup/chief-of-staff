@@ -38,14 +38,16 @@ shutil.copy2(path, "%s.bak-cos-%s" % (path, time.strftime("%Y%m%d-%H%M%S")))
 d.get("extraKnownMarketplaces", {}).pop("cos-mods", None)
 d.get("enabledPlugins", {}).pop("workspace-sidebar@cos-mods", None)
 hook = os.path.join(repo, "hooks", "peer-bare-command-drop.sh")
-ups = d.get("hooks", {}).get("UserPromptSubmit")
-if ups is not None:
-    ups[:] = [e for e in ups if not any(h.get("command") == hook for h in e.get("hooks", []))]
+ours = {hook} | {"python3 " + os.path.join(repo, "hooks", n) for n in ("ask-gate.py", "stop-guard.py", "pushback-catcher.py")}
+for event in ("UserPromptSubmit", "PreToolUse", "Stop"):
+    entries = d.get("hooks", {}).get(event)
+    if entries is not None:
+        entries[:] = [e for e in entries if not any(h.get("command") in ours for h in e.get("hooks", []))]
 tmp = path + ".tmp"
 with open(tmp, "w") as f:
     json.dump(d, f, indent=2); f.write("\n")
 os.replace(tmp, path)
-print("settings: mod and hook removed (backup next to settings.json)")
+print("settings: mod and hooks removed (backup next to settings.json)")
 PY
 fi
 

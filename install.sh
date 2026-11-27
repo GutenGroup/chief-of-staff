@@ -6,7 +6,7 @@
 #   ./install.sh --yes --owner Alex                (COOs are chosen later, in the Chief of Staff's first-run interview)
 #   ./install.sh --yes --owner Alex --projects "Acme,Side Project"   (scripted: create these COOs' starter files now)
 #   ./install.sh --runner                         fleet member: also install the background job runner (launchd)
-#   ./install.sh --no-settings                    do not touch ~/.claude/settings.json (mod + hook)
+#   ./install.sh --no-settings                    do not touch ~/.claude/settings.json (mod + hooks)
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
@@ -101,7 +101,7 @@ fi
 chmod u+x "$REPO/bin/"*.py "$REPO/hooks/"*.sh
 case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) say "note: add ~/.local/bin to PATH to use the 'cos' command" ;; esac
 
-# 7. Settings: the Workspace mod (directory marketplace) and the peer-message hook. Backed up first.
+# 7. Settings: the Workspace mod (directory marketplace) and the peer-message and autonomy hooks. Backed up first.
 if [ "$SETTINGS" -eq 1 ]; then
   python3 - "$CLAUDE_DIR/settings.json" "$REPO" <<'PY'
 import json, os, shutil, sys, time
@@ -123,12 +123,19 @@ ups = data.setdefault("hooks", {}).setdefault("UserPromptSubmit", [])
 have = [h.get("command", "") for e in ups for h in e.get("hooks", [])]
 if not any(c.endswith("peer-bare-command-drop.sh") for c in have):
     ups.append({"matcher": "", "hooks": [{"type": "command", "command": hook, "timeout": 5}]}); changed = True
+# Autonomy hooks (docs/AUTONOMY.md section 7): they only deny and inform, never change permissions.
+for event, matcher, script in (("PreToolUse", "AskUserQuestion", "ask-gate.py"), ("Stop", "", "stop-guard.py"),
+                               ("UserPromptSubmit", "", "pushback-catcher.py")):
+    entries = data["hooks"].setdefault(event, [])
+    if not any(h.get("command", "").endswith(script) for e in entries for h in e.get("hooks", [])):
+        entries.append({"matcher": matcher, "hooks": [{"type": "command",
+                        "command": "python3 " + os.path.join(repo, "hooks", script), "timeout": 5}]}); changed = True
 if changed:
     tmp = path + ".tmp"
     with open(tmp, "w") as f:
         json.dump(data, f, indent=2); f.write("\n")
     os.replace(tmp, path)
-    print("settings: Workspace mod and hook registered (backup next to settings.json)")
+    print("settings: Workspace mod and hooks registered (backup next to settings.json)")
 else:
     print("settings: already set")
 PY

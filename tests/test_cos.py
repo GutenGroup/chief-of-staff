@@ -297,7 +297,7 @@ class CosTest(unittest.TestCase):
         self.assertNotIn("session title: CoS", out)
 
     def test_comms_send_authority_is_learned(self):
-        self.assertEqual(self.run_comms("can-send", "Sam").stdout.strip(), "ASK")
+        self.assertTrue(self.run_comms("can-send", "Sam").stdout.startswith("COS"))  # no line: the ramp decides (unknown kind -> COS)
         self.run_comms("allow", "Sam", "owner: send freely")
         self.assertEqual(self.run_comms("can-send", "Sam").stdout.strip(), "SEND")
         self.run_comms("verify", "Sam", "--kind", "pricing", "owner: always check pricing")

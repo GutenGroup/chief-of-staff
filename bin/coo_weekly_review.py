@@ -93,6 +93,39 @@ def measure(paths, report, as_of=None):
     return {"viol": viol, "selfask": selfask, "stale": len(stale) + gone, "goals": goals, "entries": len(ents)}
 
 
+def ledger_metrics(days=7, path=None, today=None):
+    """Autonomy metrics from the ask ledger (hooks/autonomy_common.py writes it): owner asks outside legal and money
+    (ask-gate asks that were untagged, setup interview excluded, plus stop-guard blocks), pushbacks and their rate
+    over owner prompts, decided items (cos decided)."""
+    import json
+    path = path or os.path.join(os.path.expanduser("~"), ".claude", "needs-input", "ask-ledger.jsonl")
+    cut = ((today or datetime.date.today()) - datetime.timedelta(days=days)).isoformat()
+    asks = push = prompts = decided = 0
+    try:
+        rows = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
+    except (OSError, ValueError):
+        rows = []
+    for r in rows:
+        if not isinstance(r, dict) or str(r.get("ts", ""))[:10] < cut:
+            continue
+        t, d = r.get("type"), r.get("decision")
+        if t == "ask" and r.get("tagged") is False and r.get("reason") not in ("setup", "interview", "no-questions"):
+            asks += 1
+        elif t == "stop" and d == "block":
+            asks += 1
+        elif t == "pushback":
+            push += 1
+            prompts += 1
+        elif t == "prompt":
+            prompts += 1
+        elif t == "decided":
+            decided += 1
+    rate = f"{100 * push / prompts:.0f}%" if prompts else "n/a"
+    return [f"- owner asks outside legal/money: {asks} in {days} days ({asks / days:.1f}/day)",
+            f"- pushbacks: {push} of {prompts} owner prompts ({rate})",
+            f"- decided items logged: {decided}"]
+
+
 def insert_row(path, week, row, note):
     txt = open(path, encoding="utf-8").read()
     if f"({week})" in section(txt, 2):
@@ -150,6 +183,7 @@ def main(argv):
         n = len(L.private_coos())
         print(f"private COOs configured: {n} (reviewed locally, aggregate only, nothing written to git or shared folders)")
     out = f"# COO training review {week}\n\nGenerated {today} by coo_weekly_review.py. One line per COO: date | repeated corrections | self-decidable asks | stale knowledge | goals | coaching note.\n\n" + "\n".join(lines) + "\n"
+    out += "\n## Autonomy (ask ledger, last 7 days)\n" + "\n".join(ledger_metrics()) + "\n"
     if dry:
         print(out)
     else:
