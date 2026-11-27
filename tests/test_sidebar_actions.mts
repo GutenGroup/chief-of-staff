@@ -112,11 +112,11 @@ test('only needs-owner[legal] and [money] reach the owner; an untagged ask shows
   assert.deepEqual(cleared.actions, [])
 })
 
-test('decided: at most five well-formed items, and Undo sends "undo <id>"', () => {
-  const list = Array.from({ length: 8 }, (_, i) => ({ id: `d${i}`, title: `t${i}`, what: 'w', why: 'y', source: 's', undo: 'u' }))
+test('decided: at most twelve well-formed items, and Undo sends "undo <id>"', () => {
+  const list = Array.from({ length: 15 }, (_, i) => ({ id: `d${i}`, title: `t${i}`, what: 'w', why: 'y', source: 's', undo: 'u' }))
   const shaped = shapeDecided([null, { id: '', title: 'no id' }, { title: 'no id either' }, ...list])
-  assert.equal(shaped.length, 5)
-  assert.deepEqual(shaped.map(d => d.id), ['d0', 'd1', 'd2', 'd3', 'd4'])
+  assert.equal(shaped.length, 12)
+  assert.deepEqual(shaped.map(d => d.id), Array.from({ length: 12 }, (_, i) => `d${i}`))
   assert.deepEqual(shapeDecided('nope'), [])
   assert.equal(shapeDecided([{ id: 'x1', what: 'moved the file' }])[0]!.title, 'moved the file')
   assert.equal(undoMessage('d3'), 'undo d3')
@@ -145,6 +145,14 @@ test('packet card: structured packet, and the old ask/options shape with a tag',
   assert.deepEqual(old.agree, [])
   assert.equal(shapePacket({ id: 'c', title: 'Plain question', ask: 'which one?' }), undefined)
   assert.equal(shapePacket({ id: 'd', title: '[legal] x', packet: { tag: 'legal', link: 'http://insecure.example' } })!.link, '') // only https
+})
+
+test('the one [big] packet keeps every held action and needs no link', () => {
+  const agree = Array.from({ length: 8 }, (_, i) => `${i + 1}. action. Undo: none`)
+  const big = shapePacket({ id: 'a', title: 'Decide 8 big or irreversible actions', ask: '[big] a; b', packet: { tag: 'big', agree, link: '' } })!
+  assert.equal(big.tag, 'big')
+  assert.equal(big.agree.length, 8)
+  assert.equal(big.link, '')
 })
 
 test('permission line: one line unless the Chief of Staff session is in bypass', () => {

@@ -86,7 +86,7 @@ class PrecheckTest(unittest.TestCase):
 
     def test_drill_dry_run_validates_case_file(self):
         r = self.cos("autonomy-drill", "--dry-run")
-        self.assertIn("25 cases ok", r.stdout)
+        self.assertIn("31 cases ok", r.stdout)
 
     def test_case_file_shape(self):
         sys.path.insert(0, os.path.join(HERE, "bin"))
@@ -98,13 +98,17 @@ class PrecheckTest(unittest.TestCase):
         finally:
             os.environ.clear()
             os.environ.update(env)
-        self.assertEqual(len(cases), 25)
+        self.assertEqual(len(cases), 31)
         self.assertEqual(sum(c["expected"] == "precheck first" for c in cases), 5)
         self.assertEqual(sum(c["expected"] == "packet[legal]" for c in cases), 2)
         self.assertEqual(sum(c["expected"] == "packet[money]" for c in cases), 2)
+        self.assertEqual(sum(c["expected"] == "packet[big]" for c in cases), 2)
+        self.assertEqual(sum(c["expected"] == "ignore" for c in cases), 3)
         self.assertEqual(cos.validate_cases(cases), [])
         self.assertEqual(cos.drill_answer("thinking... ANSWER: Precheck first"), "precheck first")
         self.assertEqual(cos.drill_answer("I would act."), "act")
+        self.assertEqual(cos.drill_answer("ANSWER: packet[big]"), "packet[big]")
+        self.assertEqual(cos.drill_answer("ANSWER: ignore"), "ignore")
 
     def test_status_prompts_line_and_bypass(self):
         r = self.cos("status")
@@ -123,10 +127,10 @@ class PrecheckTest(unittest.TestCase):
         self.assertIn("autonomy: off", self.cos("status").stdout)
 
     def test_sidebar_carries_decided_and_permission_mode(self):
-        self.put(os.path.join(self.ni, "cos-brief.json"), json.dumps({"decided": [{"title": "n%d" % i} for i in range(8)]}))
+        self.put(os.path.join(self.ni, "cos-brief.json"), json.dumps({"decided": [{"title": "n%d" % i} for i in range(15)]}))
         self.cos("sidebar")
         sb = json.load(open(os.path.join(self.ni, "sidebar.json")))
-        self.assertEqual(len(sb["decided"]), 5)
+        self.assertEqual(len(sb["decided"]), 12)
         self.assertEqual(sb["permissionMode"], "default")
         self.assertIn("running with prompts", sb["permissionLine"])
 

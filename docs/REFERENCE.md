@@ -65,6 +65,15 @@ the others, with a short `machine_id` each.
 - Anything that can write a machine's inbox can queue work there, so share `fleet_dir` only between your own machines.
 - Kill switch on any machine: `touch ~/.claude/cos-jobs-off`.
 
+## Action queue
+
+`cos.py actions <findings.json>` takes `{"findings":[...]}` with `kind` (promise, question, stall, repeat, goal),
+`session`, `quote`, `date`, `speaker` (owner, assistant, peer, tool), `action`, `basis` (`goal:`, `decision:`,
+`charter:` or `owner:` plus where), `size` (small, big), `reversible`, `undo`, and optionally `recommend` and `tag`
+(legal, money). It writes `~/.claude/needs-input/action-queue.json`: `run` (small, reversible, with an undo line),
+`big` / `legal` / `money` (held until `cos.py actions clear <key>...`), `rejected`, and `packet`, the one `[big]` item
+for the brief. It runs nothing itself.
+
 ## Workspace panel
 
 The panel (`workspace-sidebar`) shows two things:

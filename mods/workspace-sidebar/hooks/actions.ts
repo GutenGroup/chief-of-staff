@@ -13,11 +13,11 @@ export type Action = {
   options?: { label: string; why: string; recommended?: boolean }[]
   title?: string // brief / session items: who asks
   copy?: string // brief items: text to copy
-  packet?: Packet // [legal] / [money] items: the owner-ready packet
+  packet?: Packet // [legal] / [money] / [big] items: the owner-ready packet
 }
 // The owner-ready packet (docs/AUTONOMY.md section 2): one card the owner can act on without opening anything.
 export type Packet = {
-  tag: 'legal' | 'money'; recommend: string; agree: string[]; checked: string[]
+  tag: 'legal' | 'money' | 'big'; recommend: string; agree: string[]; checked: string[]
   verify: { label: string; value: string }[]; link: string; after: string; time: string
 }
 export type Decided = { id: string; title: string; what: string; why: string; source: string; undo: string }
@@ -207,11 +207,11 @@ export function tickDue(last: Stamp, now: number): boolean {
 }
 
 // ── Decided list, owner-ready packets, permission mode ───────────────────────
-export const DECIDED_MAX = 5
+export const DECIDED_MAX = 12
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '')
 const strs = (v: unknown): string[] => (Array.isArray(v) ? v.map(str).filter(Boolean) : [])
 
-// brief.decided -> at most five well-formed items; anything without an id and a title is dropped.
+// brief.decided -> at most DECIDED_MAX well-formed items; anything without an id and a title is dropped.
 export function shapeDecided(list: unknown): Decided[] {
   if (!Array.isArray(list)) return []
   const out: Decided[] = []
@@ -228,15 +228,15 @@ export function shapeDecided(list: unknown): Decided[] {
 // What Undo sends to the Chief of Staff: `undo <id>` (ids never carry whitespace).
 export const undoMessage = (id: string): string => `undo ${String(id).trim().split(/\s+/)[0] || ''}`.trim()
 
-// A needsOwner item -> its packet. New shape: item.packet. Old shape: a [legal]/[money] tag in the title or ask, with
+// A needsOwner item -> its packet. New shape: item.packet. Old shape: a [legal]/[money]/[big] tag in the title or ask, with
 // ask/options/details/copy; the recommended option becomes Recommend and the first https link becomes Do it.
 export function shapePacket(q: any): Packet | undefined {
   if (!q || typeof q !== 'object') return undefined
   const pk = q.packet && typeof q.packet === 'object' ? q.packet : null
   const text = `${str(q.title)} ${str(q.ask)}`
-  const tagged = /\[(legal|money)\]/i.exec(text)
+  const tagged = /\[(legal|money|big)\]/i.exec(text)
   const tag = String(pk?.tag || tagged?.[1] || '').toLowerCase().replace(/[^a-z]/g, '')
-  if (tag !== 'legal' && tag !== 'money') return undefined
+  if (tag !== 'legal' && tag !== 'money' && tag !== 'big') return undefined
   const opts: { label?: string; recommended?: boolean }[] = Array.isArray(q.options) ? q.options : []
   const rec = opts.find(o => o && o.recommended) || opts[0]
   const link = str(pk?.link) || (/https?:\/\/[^\s)\]>`'",|]+/.exec(`${str(q.ask)} ${str(q.details)} ${str(q.copy)}`)?.[0] || '').replace(/[.;:]+$/, '')
@@ -244,7 +244,9 @@ export function shapePacket(q: any): Packet | undefined {
     ? (pk.verify as any[]).map(v => ({ label: str(v?.label), value: str(v?.value) })).filter(v => v.label || v.value).slice(0, 6)
     : []
   return {
-    tag, recommend: str(pk?.recommend) || str(rec?.label), agree: strs(pk?.agree).slice(0, 5), checked: strs(pk?.checked),
+    tag, recommend: str(pk?.recommend) || str(rec?.label),
+    agree: tag === 'big' ? strs(pk?.agree) : strs(pk?.agree).slice(0, 5), // the one [big] packet lists every held action
+    checked: strs(pk?.checked),
     verify, link: /^https:\/\//i.test(link) ? link : '', after: str(pk?.after), time: str(pk?.time),
   }
 }

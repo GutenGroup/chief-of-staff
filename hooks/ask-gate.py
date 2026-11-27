@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse on AskUserQuestion: only [legal] and [money] packets reach the owner (docs/AUTONOMY.md section 7)."""
+"""PreToolUse on AskUserQuestion: only [legal], [money] and one [big] packet reach the owner (docs/AUTONOMY.md section 7)."""
 import os
 import sys
 import time
@@ -50,16 +50,22 @@ def handler(data, session):
     if not tagged:
         A.ledger(session, "ask-gate", "ask", "deny", summary, tagged=False, reason="untagged")
         return deny(A.UNTAGGED)
-    complete = True
+    complete, bigs = True, 0
     for q in qs:
         t = texts(q).lower()
-        if not ("recommend:" in t and "verify:" in t and "https://" in t):
+        head = str(q.get("question") or "") + " " + str(q.get("header") or "")
+        # [big] only: the dialog itself is the final step, so it carries Undo instead of a link.
+        big = {m.lower() for m in A.TAG_RX.findall(head)} == {"big"}
+        bigs += big
+        if not ("recommend:" in t and "verify:" in t and ("undo:" if big else "https://") in t):
             complete = False
+    if bigs > 1:
+        complete = False
     fresh = precheck_fresh(session)
     if complete and fresh:
         A.ledger(session, "ask-gate", "ask", "allow", summary, tagged=True, reason="packet")
         return None
-    reason = A.PACKET + ("" if fresh else " Run cos precheck first.")
+    reason = (A.BIG_PACKET if bigs else A.PACKET) + ("" if fresh else " Run cos precheck first.")
     A.ledger(session, "ask-gate", "ask", "deny", summary, tagged=True,
              reason="no-precheck" if complete else "incomplete-packet")
     return deny(reason)

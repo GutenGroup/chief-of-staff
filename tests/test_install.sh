@@ -23,6 +23,7 @@ check "charter Beta" '[ -f "$HOME/ChiefOfStaff/Context/Beta_Labs/COO_CHARTER.md"
 check "panel files" '[ -f "$HOME/.claude/needs-input/index.json" ] && [ -f "$HOME/.claude/needs-input/cos-brief.json" ] && [ -f "$HOME/.claude/needs-input/sidebar.json" ]'
 check "settings mod" 'python3 -c "import json,sys;d=json.load(open(sys.argv[1]));assert d[\"enabledPlugins\"][\"workspace-sidebar@cos-mods\"] is True;assert d[\"extraKnownMarketplaces\"][\"cos-mods\"][\"source\"][\"path\"]==sys.argv[2]+\"/mods\"" "$HOME/.claude/settings.json" "$REPO"'
 check "settings hook" 'grep -q peer-bare-command-drop.sh "$HOME/.claude/settings.json"'
+check "bypass line in setup output" 'grep -q "Bypass permissions mode is recommended" /tmp/cos-install-1.log && grep -q "pick another mode" /tmp/cos-install-1.log'
 check "VP charter standard" '[ -f "$HOME/ChiefOfStaff/Context/Production_VP/COO_CHARTER.md" ] && grep -q "Production VP charter" "$HOME/ChiefOfStaff/Context/Production_VP/COO_CHARTER.md"'
 for f in PERSONA PLAYBOOK KNOWLEDGE LESSONS SCORECARD; do
   check "VP coo/$f.md" '[ -f "$HOME/ChiefOfStaff/Context/Production_VP/coo/'$f'.md" ]'

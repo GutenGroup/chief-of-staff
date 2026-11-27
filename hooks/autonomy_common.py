@@ -17,12 +17,14 @@ import os
 import re
 import sys
 
-UNTAGGED = ("Autonomy contract (docs/AUTONOMY.md): only legal and money reach the owner. Research it in the knowledge "
-            "sources, decide, do it, and report it under decided with an undo line. Sign-ins go through an existing "
-            "session, SSO or a magic link.")
+UNTAGGED = ("Autonomy contract (docs/AUTONOMY.md): only legal, money and big or irreversible steps reach the owner. "
+            "Research it in the knowledge sources, decide, do it, and report it under decided with an undo line. "
+            "Sign-ins go through an existing session, SSO or a magic link.")
 PACKET = ("Owner-ready packet required: Recommend, What you agree to, Checked, Verify (pre-filled values), "
           "Do it (one link to the final step, all fields filled), After, Time.")
-TAG_RX = re.compile(r"\[(legal|money)\]", re.I)
+BIG_PACKET = ("One [big] packet required, as a single question: Recommend, the held actions, Checked, Verify, "
+              "Undo (for each action, or that it cannot be undone), After, Time.")
+TAG_RX = re.compile(r"\[(legal|money|big)\]", re.I)
 PRECHECK_MAX_AGE = 15 * 60
 
 

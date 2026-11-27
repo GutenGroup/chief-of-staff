@@ -185,6 +185,10 @@ Installed Chief of Staff $(cat "$REPO/VERSION").
 The Production VP and the Communication VP come standard (charters and five training files are in place).
 Your COOs are yours to choose: the Chief of Staff guides you through it on its first run.
 
+Bypass permissions mode is recommended (you turn it on): sessions use tools without permission prompts. To turn it
+off, pick another mode in the app's permission-mode picker (or remove "defaultMode": "bypassPermissions" from
+~/.claude/settings.json); the system keeps working but stops for each approval.
+
 First run:
   1. Restart the Claude desktop app so it loads the Workspace panel (enable "workspace-sidebar" if asked).
   2. Start a new Code session (Opus, medium effort), title it exactly:  Chief of Staff
