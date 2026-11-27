@@ -23,6 +23,10 @@ jobs:
         run: python3 .github/scripts/pii_check.py .
       - name: Highlights (3-6 bullets)
         run: python3 .github/scripts/highlights.py
+      - name: Autonomy phrases (old broad escalation wording must not return)
+        run: |
+          python3 .github/scripts/autonomy_lint.py
+          python3 bin/cos.py autonomy-drill --dry-run
       - name: Editions up to date (directory/, chatgpt/)
         run: python3 .github/scripts/build_editions.py --check
       - uses: actions/setup-node@v4

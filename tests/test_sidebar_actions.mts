@@ -1,7 +1,7 @@
 // Workspace panel parsing. Run: node --test tests/test_sidebar_actions.mts (Node 23.6+ strips the types).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { dedupe, holdsLease, isReportFile, linksIn, parseReport, tickDue, visible } from '../mods/workspace-sidebar/hooks/actions.ts'
+import { PROMPTS_LINE, dedupe, holdsLease, isReportFile, linksIn, parseReport, permissionLine, shapeDecided, shapePacket, tickDue, undoMessage, visible } from '../mods/workspace-sidebar/hooks/actions.ts'
 
 const NOW = Date.parse('2026-11-26T13:00:00Z')
 const SID = ['local', '0a1b2c3d-1111-2222-3333-444455556666'].join('_') // a session id, built so the release scan passes
@@ -110,4 +110,50 @@ test('only needs-owner[legal] and [money] reach the owner; an untagged ask shows
   const cleared = parseReport(text + '\n- 2026-11-26T12:40Z | needs-owner: none', 'Acme.md', NOW, '')
   assert.equal(cleared.latest!.forCos, undefined)
   assert.deepEqual(cleared.actions, [])
+})
+
+test('decided: at most five well-formed items, and Undo sends "undo <id>"', () => {
+  const list = Array.from({ length: 8 }, (_, i) => ({ id: `d${i}`, title: `t${i}`, what: 'w', why: 'y', source: 's', undo: 'u' }))
+  const shaped = shapeDecided([null, { id: '', title: 'no id' }, { title: 'no id either' }, ...list])
+  assert.equal(shaped.length, 5)
+  assert.deepEqual(shaped.map(d => d.id), ['d0', 'd1', 'd2', 'd3', 'd4'])
+  assert.deepEqual(shapeDecided('nope'), [])
+  assert.equal(shapeDecided([{ id: 'x1', what: 'moved the file' }])[0]!.title, 'moved the file')
+  assert.equal(undoMessage('d3'), 'undo d3')
+  assert.equal(undoMessage('  d3 extra '), 'undo d3')
+})
+
+test('packet card: structured packet, and the old ask/options shape with a tag', () => {
+  const full = shapePacket({
+    id: 'a', title: 'Sign the agreement', ask: 'Sign it',
+    packet: {
+      tag: 'legal', recommend: 'Sign after the term change', agree: ['one', 'two', 'three', 'four', 'five', 'six'], checked: ['names', 'dates'],
+      verify: [{ label: 'Entity', value: 'Acme Ltd' }, { label: '', value: '' }], link: 'https://example.com/sign', after: 'filed', time: 'about 1 minute',
+    },
+  })!
+  assert.equal(full.tag, 'legal')
+  assert.equal(full.agree.length, 5)
+  assert.deepEqual(full.verify, [{ label: 'Entity', value: 'Acme Ltd' }])
+  assert.equal(full.link, 'https://example.com/sign')
+  const old = shapePacket({
+    id: 'b', title: '[money] Pay the invoice', ask: 'pay at https://example.com/pay.',
+    options: [{ label: 'Pay now', why: '', recommended: true }, { label: 'Hold', why: '' }],
+  })!
+  assert.equal(old.tag, 'money')
+  assert.equal(old.recommend, 'Pay now')
+  assert.equal(old.link, 'https://example.com/pay')
+  assert.deepEqual(old.agree, [])
+  assert.equal(shapePacket({ id: 'c', title: 'Plain question', ask: 'which one?' }), undefined)
+  assert.equal(shapePacket({ id: 'd', title: '[legal] x', packet: { tag: 'legal', link: 'http://insecure.example' } })!.link, '') // only https
+})
+
+test('permission line: one line unless the Chief of Staff session is in bypass', () => {
+  const modes = { [SID]: { mode: 'default', at: '2026-11-27T10:00:00Z' }, other: { mode: 'bypassPermissions', at: '' } }
+  assert.equal(permissionLine(modes, SID), PROMPTS_LINE)
+  assert.equal(permissionLine(modes, SID.replace(/^local_/, '')), PROMPTS_LINE) // id with or without the prefix
+  assert.equal(PROMPTS_LINE, 'running with prompts: the system will stop for approvals; switch to bypass for full autonomy')
+  assert.equal(permissionLine({ [SID]: { mode: 'bypassPermissions' } }, SID), '')
+  assert.equal(permissionLine(modes, 'local_missing'), '') // no entry: nothing
+  assert.equal(permissionLine(null, SID), '') // no file: nothing
+  assert.equal(permissionLine(modes, ''), '')
 })

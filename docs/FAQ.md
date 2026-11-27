@@ -52,9 +52,12 @@ It should not. Before asking it checks your recorded decisions (`~/ChiefOfStaff/
 lessons). If it does, tell it once; that becomes a lesson.
 
 ### What does it never do on its own?
-It never moves money, signs or accepts anything legal, sends messages to other people, deletes data, or pushes to a
-remote on your behalf without your answer. Those always come to you as a dialog. Workers run with a locked-down tool
-list (no web, no interpreters, no push).
+It never moves money or signs or accepts anything legal without you. Those are the two hard stops, `[legal]` and
+`[money]`, and each reaches you as a ready-to-act packet. Everything else it decides and does, then reports with an
+undo line. COOs merge and deploy finished work on green checks. The Communication VP sends the messages the trust ramp
+allows (your own words relayed, status, scheduling and answers to known contacts, replies in threads you already
+engaged in) and sends money or legal messages to you first. Workers have a restricted tool list: they may commit, push
+a non-default branch and open a PR, never merge or deploy.
 
 ### What leaves my machine?
 Nothing new. All state is plain markdown on your disk. The only network traffic is the Claude Code sessions themselves,

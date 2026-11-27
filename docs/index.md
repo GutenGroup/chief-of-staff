@@ -25,6 +25,7 @@ Built and tuned for a product studio running several products (a COO per product
 - [Getting started](GETTING-STARTED.md): install, first run, the COO setup interview
 - [Setting up your COOs](SETTING-UP-COOS.md): how to choose them
 - [How it works](HOW-IT-WORKS.md): the ladder, loops, auto-clear, dialogs, training
+- [The autonomy contract](AUTONOMY.md): bypass mode, the two hard stops, owner-ready packets
 - [Operating](OPERATING.md): memory and clearing, max context, models and effort, loops
 - [The Production VP](PRODUCTION-VP.md)
 - [The Communication VP](COMMUNICATION-VP.md): all your communication, learned send authority, botreeve as the bridge

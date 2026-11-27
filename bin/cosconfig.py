@@ -51,6 +51,8 @@ DEFAULTS = {
     "clear_at_vp": 200000,
     "clear_at_coo": 150000,
     "overlay_dir": "~/.claude/cos-overlay",
+    "autonomy_scope": "roles",   # roles | all: who the autonomy hooks apply to (docs/AUTONOMY.md section 7)
+    "knowledge_sources": [],     # folders and files `cos precheck` searches besides the data root
 }
 
 
@@ -103,6 +105,10 @@ def load(path=None):
     except Exception:
         data = parse_yaml_subset(text)
     cfg.update({k: v for k, v in data.items() if v is not None})
+    if not isinstance(cfg.get("knowledge_sources"), list):
+        cfg["knowledge_sources"] = [cfg["knowledge_sources"]] if cfg.get("knowledge_sources") else []
+    if str(cfg.get("autonomy_scope")).lower() not in ("roles", "all"):
+        cfg["autonomy_scope"] = "roles"
     if not isinstance(cfg.get("projects"), list):
         cfg["projects"] = [cfg["projects"]] if cfg.get("projects") else []
     return cfg

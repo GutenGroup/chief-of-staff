@@ -38,16 +38,25 @@ new group when you ask for one. Because everyone's Chief of Staff can join the s
 teams connect: each person keeps their own Chief of Staff and their own rules, and their Communication VPs talk to each
 other in shared groups.
 
-## Send authority is learned, not fixed
+## Send authority: the trust ramp
 
-Out of the box it asks you before sending (a dialog with the draft: Send / Edit / Hold). Then it learns:
+Out of the box it follows the ramp in the [autonomy contract](AUTONOMY.md):
+
+- **Sent without asking:** your own words relayed to the person who asked; status, scheduling and answers to people and
+  groups in `CONTACTS.md` and `CHANNELS.md`; replies in a thread you already engaged in.
+- **To you only** when the message commits money or a legal term: a `[money]` or `[legal]` packet with the draft ready
+  to send in one click.
+- **Everything else unclear** goes to the Chief of Staff, which researches and decides. An access or role change with no
+  verbatim order is held while the system finds the order in the record.
+- No auto-promotion. Every edit you make to a draft becomes a lesson the same turn.
+
+`comms.py can-send <target> [--kind K]` answers SEND, ASK, OWNER or COS. You can also give specific rules:
 
 - You say **"send without approval"** for a person, a group or a kind of message: from then on it sends those.
 - You say **"always verify"**: from then on it always asks.
 
 Each instruction is one line in `PERMISSIONS.md`, so you can read and change what it may do. The most specific line
-wins, and a newer line beats an older one. Money, legal commitments, credentials and anything irreversible for people
-outside your team always come to you, whatever the permissions say.
+wins, and a newer line beats an older one. Money and legal messages always come to you, whatever the permissions say.
 
 Every message ends with a signature line, by default "Written and drafted by <your name>'s Communication VP.", so
 readers know a system wrote it. Change it with `comms_signature` in `~/.claude/cos-config.yaml`.

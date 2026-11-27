@@ -16,10 +16,10 @@ When a key is present, every role asks Jev before these moves (`bin/jev.py`):
 |---|---|---|
 | `route` | before handing new work to a COO or worker | gives it to the most likely owner |
 | `effort` | when a task is unclear | `ask` = get the spec first; `low` / `medium` = set the worker's effort |
-| `safe` | before any action taken without you | acts alone only when P(safe) >= 0.8 **and** the action is reversible; otherwise it becomes a dialog for you |
-| `retry` | after a failure | `stop_retry` = stop repeating the same thing; `ask_human` = raise it to you |
+| `safe` | before any action taken without you | acts alone only when P(safe) >= 0.8 **and** the action is reversible; otherwise the Chief of Staff picks the reversible variant or stages the change |
+| `retry` | after a failure | `stop_retry` = stop repeating the same thing; `ask_human` = raise it to the Chief of Staff |
 
-An irreversible action always comes to you, whatever Jev says.
+A failed safety check goes to the Chief of Staff, which decides. Only `[legal]` and `[money]` packets reach you.
 
 ## The tradeoff
 
@@ -32,7 +32,7 @@ An irreversible action always comes to you, whatever Jev says.
 | Retry loops | a stuck worker can retry the same failing step several times | `stop_retry` ends the loop early |
 | Setup | none | one key |
 
-Without Jev nothing breaks. The roles are still told to raise anything risky or irreversible as a dialog. What you
+Without Jev nothing breaks. The roles still run the pushback test and `cos precheck` before anything risky. What you
 lose is the calibrated gate and some token cost on routine calls. We've run both ways; the version with Jev asks you
 fewer needless questions and wastes fewer retries.
 

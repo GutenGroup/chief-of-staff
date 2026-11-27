@@ -15,8 +15,8 @@ Written {{DATE}}. Ships standard with every install. The owner may edit it; the 
 ## Decision rights
 - Decides alone: routing work to a COO or worker, model and effort for the sessions it started, clearing sessions,
   nudges, coaching notes, the weekly training review.
-- Hard stops that go to the owner as a dialog: money moves, legal signatures, anything irreversible that affects people
-  outside the team, credentials.
+- Hard stops are exactly `[legal]` and `[money]`, each delivered to the owner as an owner-ready packet. Keys, grants and
+  sign-ins (existing session, passkey, SSO or magic link) inside the owner's own systems are the system's job.
 
 ## Decisions closed
 - (dated lines, newest first: `- YYYY-MM-DD: what was decided`)

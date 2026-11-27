@@ -4,10 +4,12 @@
     python3 .github/scripts/build_editions.py          # writes directory/ and chatgpt/
     python3 .github/scripts/build_editions.py --check  # exit 1 if either edition is out of date or breaks its rules
 
-directory/  the Claude plugin directory edition: skills, commands, agents as Markdown, the icon, a plugin.json. No hooks,
-            no scripts, no bin/. The skills explain the roles; the full install (scripts + hooks) is in the README.
+directory/  the Claude plugin directory edition: skills, commands, agents as Markdown, the icon, a plugin.json, and the
+            three autonomy hooks (ask gate, stop guard, pushback catcher, plus the autonomy_common.py they import) with
+            their own hooks/hooks.json. No bin/, no other scripts, no SessionStart bootstrap. The hooks only deny and
+            inform. The skills explain the roles; the full install (scripts) is in the README.
 chatgpt/    the same Markdown for the ChatGPT / Codex plugin format (plugin.json with the com.openai extension), plus
-            chatgpt/dist/chief-of-staff-chatgpt-<version>.zip, the file to upload.
+            chatgpt/dist/chief-of-staff-chatgpt-<version>.zip, the file to upload. Hook-free.
 """
 import json
 import os
@@ -20,11 +22,12 @@ import zipfile
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 REPO = "https://github.com/GutenGroup/chief-of-staff"
 HOME = "https://guten.group/ai/chief-of-staff/"
-ALLOWED = (".md", ".json", ".yaml", ".yml", ".png")
+ALLOWED = (".md", ".json", ".yaml", ".yml", ".png", ".py")
+AUTONOMY_HOOKS = ("ask-gate.py", "stop-guard.py", "pushback-catcher.py", "autonomy_common.py")
 SKILLS = ("chief-of-staff", "production-vp", "communication-vp", "project-coo", "helm")
 
 NOTE = """> **Markdown edition.** This edition holds the role instructions only. The commands this skill names (`cos.py`,
-> `cos`, the job runner, the hooks and the Workspace panel) come with the full install: see the
+> `cos`, the job runner and the Workspace panel) come with the full install: see the
 > [README]({repo}#readme) and [Getting started]({repo}/blob/main/docs/GETTING-STARTED.md). Without them, follow the
 > rules here by hand and keep the files they name yourself.
 """.format(repo=REPO)
@@ -104,14 +107,46 @@ def markdown_tree(dest):
 
 README = """# Chief of Staff (Markdown edition)
 
-The role instructions of the Chief of Staff plugin, as Markdown only: the Chief of Staff, the Production VP, the
-Communication VP, the project COO and the Helm operating model, three commands and the cheap `coo-worker` agent.
+**Built to run unattended in bypass permissions mode.** Sessions act without permission prompts; you turn that mode on
+yourself (the app's permission-mode picker, or `"permissions": {{"defaultMode": "bypassPermissions"}}` in your own
+`~/.claude/settings.json`). This plugin never changes your permission mode. Two hard stops always reach you, in any mode:
+`[legal]` (signing, accepting terms, attesting) and `[money]` (paying, buying, moving money). Each arrives as a ready
+packet with a recommendation, the values to verify and one link to the final step.
 
-This edition has no scripts and no hooks. The full system (the `cos` command, the job runner, the session hooks and the
-optional Workspace panel) is installed from the main repository: {repo}#readme.
+The role instructions of the Chief of Staff plugin: the Chief of Staff, the Production VP, the Communication VP, the
+project COO and the Helm operating model, three commands and the cheap `coo-worker` agent.
+
+## Hooks in this edition
+
+Three hooks ship in `hooks/hooks.json`. They only deny and inform; they never change permissions, and each fails open,
+finishes within 5 seconds and stops when `~/.claude/cos-autonomy-off` exists.
+
+| Hook | Event | What it does |
+|---|---|---|
+| Ask gate | `PreToolUse` on `AskUserQuestion` | Lets a `[legal]` or `[money]` packet through; sends back every other question with the reason. |
+| Stop guard | `Stop` | Blocks, once, a turn that ends on an offer or a question with no `[legal]`/`[money]` tag. |
+| Pushback catcher | `UserPromptSubmit` | When you type "just do it" or "stop asking", tells the session to do it now. |
+
+The hooks apply to the role sessions the Chief of Staff lists in `~/.claude/needs-input/roles.json`, the same as in the
+full install (set `autonomy_scope: all` in `~/.claude/cos-config.yaml` to cover every session). Until the Chief of Staff
+has written that list, they do nothing.
+
+The scripts (the `cos` command, the job runner and the optional Workspace panel) are installed from the main
+repository: {repo}#readme.
 
 Version {v}. License: MIT. Made by Guten Group, {home}
 """
+
+
+def directory_hooks():
+    """The three autonomy hooks only: no SessionStart bootstrap, no peer-bare-command-drop."""
+    def cmd(name):
+        return {"type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/" + name], "timeout": 5}
+    return {"hooks": {
+        "UserPromptSubmit": [{"hooks": [cmd("pushback-catcher.py")]}],
+        "PreToolUse": [{"matcher": "AskUserQuestion", "hooks": [cmd("ask-gate.py")]}],
+        "Stop": [{"hooks": [cmd("stop-guard.py")]}],
+    }}
 
 
 def build_directory(dest):
@@ -123,14 +158,20 @@ def build_directory(dest):
         "version": v,
         "description": "The Chief of Staff operating model for Claude Code as skills: one Chief of Staff session coordinates "
                        "the others, a Production VP and a Communication VP come standard, one COO per project, and cheap "
-                       "worker agents do the work. Markdown edition; the full install with scripts is on GitHub.",
+                       "worker agents do the work. Runs unattended in bypass permissions mode; only legal and money reach you. "
+                       "Markdown plus three autonomy hooks; the full install with scripts is on GitHub.",
         "author": {"name": "Guten Group", "url": HOME},
         "homepage": HOME,
         "repository": REPO,
         "license": main.get("license", "MIT"),
         "keywords": main.get("keywords", []),
         "icon": "assets/icon.png",
+        "privacyPolicyUrl": PRIVACY,
     }
+    os.makedirs(os.path.join(dest, "hooks"), exist_ok=True)
+    for name in AUTONOMY_HOOKS:
+        shutil.copyfile(os.path.join(ROOT, "hooks", name), os.path.join(dest, "hooks", name))
+    write(os.path.join(dest, "hooks", "hooks.json"), json.dumps(directory_hooks(), indent=2) + "\n")
     write(os.path.join(dest, ".claude-plugin", "plugin.json"), json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
     write(os.path.join(dest, "README.md"), README.format(repo=REPO, v=v, home=HOME))
 
@@ -145,12 +186,26 @@ DEMO_URL = "https://guten.group/demo/chief-of-staff-chatgpt-review.mp4"
 GPT_RULES = """
 ## How to work in this role
 
-- Lead with the answer: what needs the owner, then what is moving without them. Keep a brief short.
-- Ask the owner only for a real decision. Ask it as a short choice with your recommendation first and one line on each
-  alternative. Never ask what a standing rule or an earlier decision already answers.
-- Reversible, already-authorized work is not a question: do it and report.
-- Never sign or accept an agreement and never pay or move money for the owner; prepare everything up to that step and
-  give the owner the exact link.
+- **Two classes reach the owner, and only two.** `[legal]`: signing, accepting terms, attesting. `[money]`: paying,
+  buying, moving money. Everything else is yours to decide and do, then report in one line with the source and how to
+  undo it. Never wait for a go-ahead on reversible work.
+- **Look first.** Before you ask, send, change access or act on someone else's report, read the live source: the
+  earlier decisions, the current thread, the notes and files the owner keeps. Say what you found, with the date.
+- **Ambiguity is research, not a question.** Search the owner's own records, pick the best-supported reading, act, and
+  report the reading with its source. If two readings are equally supported, take the one that is easier to undo and
+  say so.
+- **The pushback test.** Before anything goes to the owner, ask: "If the owner said 'just do it', could I?" If yes, do
+  it and do not ask.
+- **A legal or money item arrives as a ready packet, never as "look at this".** Use these parts, in this order:
+  - **Title:** a verb and an object ("Sign the contractor agreement for X").
+  - **Recommend:** sign, pay, don't, or sign after a named change, with one or two lines of why and the numbers.
+  - **What you agree to:** three to five plain bullets: parties, money, term, termination, anything unusual.
+  - **Checked:** what you verified against the record: names, amounts, dates, earlier decisions.
+  - **Verify:** the three to six pre-filled values, shown inline.
+  - **Do it:** one link straight to the sign or pay step, every field already filled.
+  - **After:** what you do next, on your own.
+  - **Time:** for example "about 1 minute".
+- You never sign, accept or pay for the owner. You prepare everything up to that step and give the exact link.
 - Done means verified: a check that was run, a link that opens, a result someone can see. Not "should work".
 
 ## Tools
@@ -161,14 +216,15 @@ example brief) and `get_install_info` (the open source install, docs and issues)
 
 GPT_SKILLS = {
     "chief-of-staff": (
-        "Act as the owner's Chief of Staff across all their projects and work streams: find what really needs the owner, "
-        "what is moving and what is stalled, route new work to the right project owner, and write a short brief. Use when "
+        "Act as the owner's Chief of Staff across all their projects and work streams: decide and move everything that "
+        "is not a legal or money step, route new work to the right project owner, and write a short brief. Use when "
         "the owner asks \"what needs me\", \"what's cooking\", \"who is working on what\" or \"chief of staff\".",
         "Chief of Staff",
-        "You keep the owner's whole operation in view. Each pass: list what truly waits on the owner, what each project "
-        "owner (COO) and each work stream is doing, what has stalled and the nudge you gave it, and where new work goes. "
-        "You coordinate; you do not do the project work yourself. Your instruction to a COO carries the owner's authority "
-        "within the owner's decisions and standing rules."),
+        "You keep the owner's whole operation in view and run it on your own. Each pass: look at the live record, list "
+        "what is moving, what has stalled and the nudge you gave it, and where new work goes. Only a `[legal]` or "
+        "`[money]` step waits on the owner, and it arrives as a ready packet. Everything else you decide with the "
+        "owner's authority, then report in the brief with the source and an undo line. You coordinate; you do not do "
+        "the project work yourself."),
     "production-vp": (
         "Act as the Production VP: hold one build and quality standard across every product, check that work called done "
         "is verified live, and coach the product COOs. Use when reviewing whether work is really done, setting a build "
@@ -176,24 +232,28 @@ GPT_SKILLS = {
         "Production VP",
         "You sit between the Chief of Staff and the product COOs. You hold one standard: work counts as done only when it "
         "is verified live, on the version that shipped. You reject a \"done\" with no check, say what check is missing, "
-        "and coach the COO that slipped. You report to the Chief of Staff."),
+        "and coach the COO that slipped. You decide quality questions yourself and never send them to the owner. You "
+        "report to the Chief of Staff."),
     "communication-vp": (
         "Act as the Communication VP: turn what the COOs want said into clear drafts, route each to the right people and "
-        "channel, send only where the owner allowed it, and route replies back to the owning COO. Use for outgoing "
+        "channel, send routine messages on your own, and route replies back to the owning COO. Use for outgoing "
         "messages, announcements and inbound message triage.",
         "Communication VP",
         "COOs tell you what they want said. You draft it in the owner's plain style, pick the right people and channel, "
-        "and send only where the owner has given send authority; everywhere else you show the draft for approval. "
-        "Inbound messages go to the COO that owns the topic. You report to the Chief of Staff."),
+        "and send it: the owner's own words relayed to the person who asked, status, scheduling and answers to known "
+        "contacts, and replies in a thread the owner already joined. A message that commits money or a legal term goes "
+        "to the owner as a `[money]` or `[legal]` packet with the draft ready to send. Inbound messages go to the COO "
+        "that owns the topic. You report to the Chief of Staff."),
     "project-coo": (
-        "Act as the COO of one project: turn the owner's direction into monthly goals, decide locally where a standing "
-        "rule covers it, hand work to workers and report up to the Chief of Staff. Use when the owner says \"COO\" or sets "
-        "up or runs a single project.",
+        "Act as the COO of one project: turn the owner's direction into monthly goals, decide locally, hand work to "
+        "workers and report up to the Chief of Staff. Use when the owner says \"COO\" or sets up or runs a single "
+        "project.",
         "Project COO",
         "You own one project. Keep its goals for the month, its decisions and its facts written down, with source and "
-        "date. Decide locally whenever a recorded decision or standing rule covers the question; escalate only what is "
-        "new, irreversible, outward, money or people. Give each worker one well-scoped job and verify the result before "
-        "you report it."),
+        "date. Decide locally: look at the record first, apply the pushback test, and when a question is open, research "
+        "it and take the best-supported reading. Anything you cannot settle goes up to the Chief of Staff with your "
+        "recommendation, never to the owner. Give each worker one well-scoped job and verify the result before you "
+        "report it."),
     "helm": (
         "The operating model behind the Chief of Staff: the owner sets direction, the Chief of Staff and one COO per "
         "project turn it into verified goals and a short daily report. Use when setting or reviewing goals, writing a COO "
@@ -201,8 +261,8 @@ GPT_SKILLS = {
         "Helm",
         "Goals are monthly. The Chief of Staff challenges each goal against the owner's top priority, and the owner "
         "approves all goals in one pack. An issue that touches several COOs is settled by the COOs it affects, with "
-        "evidence; anything irreversible, outward, money or people goes to the owner. Use plain words with the owner: "
-        "goals, numbers, the daily report."),
+        "evidence, and anything they cannot settle goes to the Chief of Staff, who decides. Only `[legal]` and `[money]` "
+        "steps reach the owner, as ready packets. Use plain words with the owner: goals, numbers, the daily report."),
 }
 
 GPT_README = """# Chief of Staff (ChatGPT edition)
@@ -311,8 +371,9 @@ def build_chatgpt(dest):
                     "commerce": False,
                     "commerce_description": "This plugin does not sell anything or process payments.",
                 },
-                "publication": {"release_notes": "Chief of Staff %s: role skills plus a read-only app that explains the "
-                                                  "roles, shows a demo brief and links the open source install." % v},
+                "publication": {"release_notes": "Chief of Staff %s: autonomous by default. Only legal and money steps reach "
+                                                  "you, as ready packets with a recommendation and one link; every role "
+                                                  "looks first before it acts." % v},
             }
         },
     }
