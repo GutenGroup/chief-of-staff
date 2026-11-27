@@ -1,7 +1,7 @@
 {
   "name": "chief-of-staff",
-  "version": "1.6.1",
-  "description": "An operating layer for Claude Code: one Chief of Staff session watches every other session, a Production VP and a Communication VP come standard, you choose your own COOs through a guided interview, and cheap worker sessions do the work. You get a short brief and click-through decisions.",
+  "version": "1.7.0",
+  "description": "An operating layer for Claude Code: one Chief of Staff session watches every other session, a Production VP and a Communication VP come standard, you choose your own COOs through a guided interview, and cheap worker sessions do the work. Built to run unattended in bypass permissions mode: it decides and does the work itself, and only legal and money decisions reach you, as ready-to-click packets.",
   "author": {
     "name": "Guten Group"
   },

@@ -11,6 +11,17 @@ Files (all plain markdown the owner can edit):
   <fleet>/comms/outbox/  queued requests from COOs       <fleet>/comms/sent/  handled requests
   <fleet>/comms/LOG.md   one line per message sent, held or received
 
+Trust ramp (can-send). Kinds: relay, status, scheduling, answer, reply, money, legal, access, other.
+  relay                       SEND   the owner's own words, relayed to the person who asked
+  reply                       SEND   a thread the owner already engaged in
+  status, scheduling, answer  SEND   when the target is listed in CONTACTS.md or CHANNELS.md, else COS
+  money                       OWNER  [money]: an owner-ready packet with the draft ready to send in one click
+  legal                       OWNER  [legal]: the same packet
+  access                      COS    held until the verbatim order is found in the record
+  other / unknown             COS    the Chief of Staff researches and decides
+An explicit `allow` line (SEND) or `verify` line (ASK) in PERMISSIONS.md wins over the ramp, except that money and
+legal can never become SEND: they always go to the owner.
+
 Channel types: google_chat, botreeve (both through MCP tools named in CHANNELS.md), folder (built in: a shared folder).
 
 Commands
@@ -20,9 +31,10 @@ Commands
   comms.py outbox                                pending requests, oldest first
   comms.py done <request> --sent|--held ["<note>"]
                                                  close a request: move it to sent/ and log it
-  comms.py can-send <target> [--kind K]          SEND or ASK, from the learned permissions (default ASK)
+  comms.py can-send <target> [--kind K]          SEND, OWNER or COS (the trust ramp below; an explicit line wins)
   comms.py allow <target> [--kind K] ["<why>"]   the owner said: send to this target without asking
-  comms.py verify <target> [--kind K] ["<why>"]  the owner said: always ask first for this target
+                                                 (refused for kind money and legal: those always go to the owner)
+  comms.py verify <target> [--kind K] ["<why>"]  the owner said: always ask first for this target (prints ASK)
   comms.py permissions                           the learned rules, newest last
   comms.py channels                              the configured channels
   comms.py signature                             the line every message ends with (comms_signature in the config)
@@ -79,7 +91,8 @@ Written by `comms.py allow` and `comms.py verify` when the owner says "send with
   - send | <target> | <kind or *> | since <date> | <why>
   - verify | <target> | <kind or *> | since <date> | <why>
 The most specific line wins (target and kind before target only before *), and the newest line wins a tie.
-With no line, the answer is ASK.
+Explicit lines win over the trust ramp (see `comms.py` help). With no line the ramp decides: SEND, OWNER or COS.
+money and legal are never SEND, whatever this file says.
 -->
 """,
 }
@@ -117,8 +130,19 @@ def cmd_init():
     return 0
 
 
-def decide(target, kind="*"):
-    best, best_rank = "ASK", -1
+KINDS = ("relay", "status", "scheduling", "answer", "reply", "money", "legal", "access", "other")
+OWNER_KINDS = {"money": "[money]", "legal": "[legal]"}
+
+
+def known_target(target):
+    """True when the target is listed in CONTACTS.md (name) or CHANNELS.md (id)."""
+    t = norm(target)
+    return bool(t) and any(r and norm(r[0]) == t for n in ("CONTACTS.md", "CHANNELS.md") for r in rows(n))
+
+
+def explicit(target, kind="*"):
+    """SEND or ASK from a matching PERMISSIONS.md line, or None when no line matches."""
+    best, best_rank = None, -1
     for i, r in enumerate(rows("PERMISSIONS.md")):
         if len(r) < 3 or r[0] not in ("send", "verify"):
             continue
@@ -131,14 +155,42 @@ def decide(target, kind="*"):
     return best
 
 
+def ramp(target, kind="*"):
+    """(verdict, note): SEND, OWNER, COS, or ASK (an explicit verify line)."""
+    k = norm(kind or "*")
+    k = "other" if k in ("*", "") or k not in KINDS else k
+    if k in OWNER_KINDS:
+        return "OWNER", ("%s must be an owner-ready packet with the draft ready to send in one click; never auto-sent"
+                         % OWNER_KINDS[k]), OWNER_KINDS[k]
+    rule = explicit(target, kind or "*")
+    if rule:
+        return rule, "", ""
+    if k in ("relay", "reply"):
+        return "SEND", "", ""
+    if k in ("status", "scheduling", "answer"):
+        if known_target(target):
+            return "SEND", "", ""
+        return "COS", "target is not in CONTACTS.md or CHANNELS.md: the Chief of Staff decides", ""
+    if k == "access":
+        return "COS", "held until the verbatim order is found in the record", ""
+    return "COS", "the Chief of Staff researches and decides", ""
+
+
+def decide(target, kind="*"):
+    return ramp(target, kind)[0]
+
+
 def add_permission(verb, target, kind, why):
+    if verb == "send" and norm(kind or "*") in OWNER_KINDS:
+        print("refused: %s always goes to the owner as a packet and can never be auto-sent" % kind)
+        return 2
     if not target:
         print("usage: comms.py %s <target> [--kind K] [\"<why>\"]" % ("allow" if verb == "send" else "verify"))
         return 2
     cmd_init_quiet()
     with open(os.path.join(CFG_DIR, "PERMISSIONS.md"), "a", encoding="utf-8") as f:
         f.write("- %s | %s | %s | since %s | %s\n" % (verb, target, kind or "*", now()[:10], why or "owner instruction"))
-    print("%s: %s (%s) -> %s" % ("allow" if verb == "send" else "verify", target, kind or "*", decide(target, kind or "*")))
+    print("%s: %s (%s) -> %s" % ("allow" if verb == "send" else "verify", target, kind or "*", ramp(target, kind or "*")[0]))
     return 0
 
 
@@ -308,7 +360,10 @@ def main(argv):
         if not rest:
             print("usage: comms.py can-send <target> [--kind K]")
             return 2
-        print(decide(rest[0], kind))
+        verdict, note, tag = ramp(rest[0], kind)
+        print(verdict + (" " + tag if tag else ""))
+        if note:
+            print(note)
         return 0
     if cmd == "permissions":
         for r in rows("PERMISSIONS.md"):

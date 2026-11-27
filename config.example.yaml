@@ -22,6 +22,15 @@ job_repo_roots: []        # fleet mode only: folders a queued job may work in, e
 # its file after its own text and the overlay wins on conflict. Updates never touch it. See docs/REFERENCE.md.
 overlay_dir: ~/.claude/cos-overlay
 
+# Who the autonomy hooks (ask gate, stop guard, pushback catcher; docs/AUTONOMY.md section 7) apply to.
+#   roles = only the sessions listed in ~/.claude/needs-input/roles.json: {"sessions": {"<session id>": "<role>"}}
+#   all   = every session on this computer. Touch ~/.claude/cos-autonomy-off to switch the hooks off.
+autonomy_scope: roles
+
+# Folders and files `cos precheck` searches (.md, .txt, .yaml) before any ask, send or access change: your notes,
+# decision records, policy folders. Example: [~/Notes, ~/Documents/decisions.md]. Empty = data_root and the overlay only.
+knowledge_sources: []
+
 claude_bin: claude        # the Claude Code CLI used by job runners and the knowledge test
 
 # When each role clears its context (tokens). State lives in files, so a clear loses nothing; clearing far below the

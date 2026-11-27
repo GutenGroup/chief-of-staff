@@ -13,7 +13,14 @@ export type Action = {
   options?: { label: string; why: string; recommended?: boolean }[]
   title?: string // brief / session items: who asks
   copy?: string // brief items: text to copy
+  packet?: Packet // [legal] / [money] items: the owner-ready packet
 }
+// The owner-ready packet (docs/AUTONOMY.md section 2): one card the owner can act on without opening anything.
+export type Packet = {
+  tag: 'legal' | 'money'; recommend: string; agree: string[]; checked: string[]
+  verify: { label: string; value: string }[]; link: string; after: string; time: string
+}
+export type Decided = { id: string; title: string; what: string; why: string; source: string; undo: string }
 export type CooLine = { name: string; outcome: string; at: number; forCos?: string } // forCos: an open untagged ask, for the Chief of Staff
 
 const DAY = 24 * 3600 * 1000
@@ -197,4 +204,60 @@ export function holdsLease(lease: Stamp, me: string, now: number): boolean {
 }
 export function tickDue(last: Stamp, now: number): boolean {
   return !(now - Date.parse(last.at || '') < TICK_FLOOR_MS)
+}
+
+// ── Decided list, owner-ready packets, permission mode ───────────────────────
+export const DECIDED_MAX = 5
+const str = (v: unknown) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '')
+const strs = (v: unknown): string[] => (Array.isArray(v) ? v.map(str).filter(Boolean) : [])
+
+// brief.decided -> at most five well-formed items; anything without an id and a title is dropped.
+export function shapeDecided(list: unknown): Decided[] {
+  if (!Array.isArray(list)) return []
+  const out: Decided[] = []
+  for (const d of list as any[]) {
+    if (!d || typeof d !== 'object') continue
+    const id = str(d.id), title = str(d.title) || str(d.what)
+    if (!id || !title) continue
+    out.push({ id, title, what: str(d.what), why: str(d.why), source: str(d.source), undo: str(d.undo) })
+    if (out.length >= DECIDED_MAX) break
+  }
+  return out
+}
+
+// What Undo sends to the Chief of Staff: `undo <id>` (ids never carry whitespace).
+export const undoMessage = (id: string): string => `undo ${String(id).trim().split(/\s+/)[0] || ''}`.trim()
+
+// A needsOwner item -> its packet. New shape: item.packet. Old shape: a [legal]/[money] tag in the title or ask, with
+// ask/options/details/copy; the recommended option becomes Recommend and the first https link becomes Do it.
+export function shapePacket(q: any): Packet | undefined {
+  if (!q || typeof q !== 'object') return undefined
+  const pk = q.packet && typeof q.packet === 'object' ? q.packet : null
+  const text = `${str(q.title)} ${str(q.ask)}`
+  const tagged = /\[(legal|money)\]/i.exec(text)
+  const tag = String(pk?.tag || tagged?.[1] || '').toLowerCase().replace(/[^a-z]/g, '')
+  if (tag !== 'legal' && tag !== 'money') return undefined
+  const opts: { label?: string; recommended?: boolean }[] = Array.isArray(q.options) ? q.options : []
+  const rec = opts.find(o => o && o.recommended) || opts[0]
+  const link = str(pk?.link) || (/https?:\/\/[^\s)\]>`'",|]+/.exec(`${str(q.ask)} ${str(q.details)} ${str(q.copy)}`)?.[0] || '').replace(/[.;:]+$/, '')
+  const verify = Array.isArray(pk?.verify)
+    ? (pk.verify as any[]).map(v => ({ label: str(v?.label), value: str(v?.value) })).filter(v => v.label || v.value).slice(0, 6)
+    : []
+  return {
+    tag, recommend: str(pk?.recommend) || str(rec?.label), agree: strs(pk?.agree).slice(0, 5), checked: strs(pk?.checked),
+    verify, link: /^https:\/\//i.test(link) ? link : '', after: str(pk?.after), time: str(pk?.time),
+  }
+}
+
+// One line when the Chief of Staff session runs with prompts. Nothing when the file or the entry is missing.
+export const PROMPTS_LINE = 'running with prompts: the system will stop for approvals; switch to bypass for full autonomy'
+export function permissionLine(modes: unknown, cosSessionId: string): string {
+  if (!modes || typeof modes !== 'object' || !cosSessionId) return ''
+  const want = sid(cosSessionId)
+  for (const [k, v] of Object.entries(modes as Record<string, any>)) {
+    if (sid(k) !== want) continue
+    const mode = str(v?.mode)
+    return mode && mode !== 'bypassPermissions' ? PROMPTS_LINE : ''
+  }
+  return ''
 }

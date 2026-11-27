@@ -39,6 +39,16 @@ check "second install exits 0" '[ $? -eq 0 ]'
 check "second install keeps settings" 'cmp -s "$HOME/.claude/settings.json" "$HOME/settings.first"'
 check "second install keeps edits" 'grep -q "Alex edit" "$HOME/ChiefOfStaff/Context/Acme/COO_CHARTER.md"'
 check "second install says already" 'grep -q "settings: already set" /tmp/cos-install-2.log'
+check "autonomy hooks registered" 'python3 -c "
+import json,sys
+d=json.load(open(sys.argv[1]));h=d[\"hooks\"]
+def cmds(ev): return [x[\"command\"] for e in h.get(ev,[]) for x in e[\"hooks\"]]
+assert any(c.endswith(\"ask-gate.py\") for c in cmds(\"PreToolUse\"))
+assert [e[\"matcher\"] for e in h[\"PreToolUse\"] if any(x[\"command\"].endswith(\"ask-gate.py\") for x in e[\"hooks\"])]==[\"AskUserQuestion\"]
+assert any(c.endswith(\"stop-guard.py\") for c in cmds(\"Stop\"))
+assert any(c.endswith(\"pushback-catcher.py\") for c in cmds(\"UserPromptSubmit\"))
+" "$HOME/.claude/settings.json"'
+check "autonomy hooks registered once" '[ "$(grep -c "ask-gate.py\|stop-guard.py\|pushback-catcher.py" "$HOME/.claude/settings.json")" = 3 ]'
 check "hook registered once" '[ "$(grep -c peer-bare-command-drop.sh "$HOME/.claude/settings.json")" = 1 ]'
 
 # A skill folder the user already has is never replaced.
@@ -93,6 +103,7 @@ check "learn-due idempotent" 'grep -q "nothing due" /tmp/cos-learn4.log'
 check "uninstall exits 0" '[ $? -eq 0 ]'
 check "links gone" '[ ! -e "$HOME/.claude/chief-of-staff" ] && [ ! -e "$HOME/.claude/skills/chief-of-staff" ]'
 check "settings cleaned" '! grep -q cos-mods "$HOME/.claude/settings.json" && ! grep -q peer-bare-command-drop "$HOME/.claude/settings.json"'
+check "autonomy hooks removed" '! grep -q "ask-gate.py\|stop-guard.py\|pushback-catcher.py" "$HOME/.claude/settings.json"'
 check "data kept" '[ -f "$HOME/ChiefOfStaff/Context/Acme/COO_CHARTER.md" ]'
 
 # A default install ships no COOs: only the Production VP.

@@ -4,6 +4,18 @@ How the Chief of Staff, the Production VP and the COOs keep running for weeks: w
 clear, which model and effort each job gets, and how the loops keep going. Every number here is a default you can
 change.
 
+## Bypass permissions mode
+
+The system is built to run unattended in **bypass permissions** mode, where sessions act without tool permission
+prompts. Turn it on yourself, either way:
+
+- pick it in the app's permission-mode picker, or
+- add `"permissions": {"defaultMode": "bypassPermissions"}` to your own `~/.claude/settings.json`.
+
+The plugin never changes your permission mode. In any other mode it still works, but each approval the app asks for
+stops that session. `cos status` and the Workspace panel show one line when a session is not in bypass mode. The
+two hard stops, `[legal]` and `[money]`, reach you in every mode. See the [autonomy contract](AUTONOMY.md).
+
 ## Memory and clearing
 
 **No role keeps anything important in its conversation.** Its memory is in files, rewritten every pass:
