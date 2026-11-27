@@ -19,7 +19,7 @@ When a key is present, every role asks Jev before these moves (`bin/jev.py`):
 | `safe` | before any action taken without you | acts alone only when P(safe) >= 0.8 **and** the action is reversible; otherwise the Chief of Staff picks the reversible variant or stages the change |
 | `retry` | after a failure | `stop_retry` = stop repeating the same thing; `ask_human` = raise it to the Chief of Staff |
 
-A failed safety check goes to the Chief of Staff, which decides. Only `[legal]` and `[money]` packets reach you.
+A failed safety check goes to the Chief of Staff, which decides. Only `[legal]`, `[money]` and `[big]` packets reach you.
 
 ## The tradeoff
 

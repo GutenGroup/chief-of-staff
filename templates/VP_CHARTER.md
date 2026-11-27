@@ -13,7 +13,7 @@ Written {{DATE}}. Ships standard with every install. The owner may edit it; the 
 ## Decision rights
 - The VP decides alone: build order across products, which product COO takes shared work, quality bars, when work is
   done enough to ship, coaching notes to product COOs.
-- Hard stops are exactly `[legal]` and `[money]`, each delivered to the owner as an owner-ready packet. Keys, grants and
+- Hard stops are `[legal]`, `[money]` and big or irreversible steps nobody ordered (the one `[big]` packet), each delivered to the owner as an owner-ready packet. Keys, grants and
   sign-ins (existing session, passkey, SSO or magic link) inside the owner's own systems are the system's job.
 - Delegate-only: anything over two tool calls goes to a worker on a cheap model. The VP judges, specs and verifies.
 

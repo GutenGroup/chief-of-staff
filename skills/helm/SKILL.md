@@ -5,7 +5,7 @@ description: Helm is the operating model behind the Chief of Staff: the owner se
 
 # Helm
 
-**Version:** 1.7.4
+**Version:** 1.8.0
 
 Autonomy contract: `docs/AUTONOMY.md` (it wins over this skill where they differ).
 
@@ -22,7 +22,8 @@ Rules in one line each:
 - Goals are monthly. The Chief of Staff challenges each goal against the owner's top priority, and the owner approves
   all goals in one pack. Review on the last day of the month.
 - An issue that touches several COOs is settled by an evidence-backed vote of the COOs it affects. No majority goes to the Chief of Staff,
-  which decides. Only `[legal]` and `[money]` packets go to the owner.
+  which decides. Only `[legal]`, `[money]` and the one `[big]` packet (held big or irreversible
+  steps) go to the owner.
 - Plain vocabulary with the owner: goals, numbers, the daily report. No third-party framework terms.
 - Skills: `chief-of-staff` (runs the system), `project-coo` (one per project), `production-vp` (the build standard).
 - Local overlay: when `cos.py status` names one, `<overlay>/helm.md` adds this install's own Helm rules and wins on

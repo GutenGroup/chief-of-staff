@@ -1,8 +1,9 @@
 # Chief of Staff
 
 **Built to run unattended.** The plugin is designed for Claude Code in **bypass permissions** mode: sessions act without
-permission prompts. You turn that mode on yourself; the plugin never changes it. Only two hard stops, `[legal]`
-(signing, accepting terms) and `[money]` (paying, buying, moving money), always reach you, each as a ready-to-act packet.
+permission prompts. You turn that mode on yourself; the plugin never changes it. Only the hard stops, `[legal]`
+(signing, accepting terms), `[money]` (paying, buying, moving money) and `[big]` (big or irreversible steps you did not
+order, in one packet), reach you, each as a ready-to-act packet.
 Everything else the system researches, decides and does, then reports with an undo line. Full contract:
 [docs/AUTONOMY.md](docs/AUTONOMY.md).
 
@@ -31,8 +32,11 @@ you
 
 - **Brief, not noise.** Every 30 minutes the Chief of Staff reads every session and every COO report. It clears false
   "needs input" flags and writes a one-page brief: what moved, what is blocked, what needs you.
-- **Two asks only.** What reaches you is a `[legal]` or `[money]` packet: a recommendation, what you agree to, the
-  values checked, and one link to finish. It shows in the session and in the Workspace panel. You never get an
+- **Proactive.** It reads what is new in your sessions, finds open promises, unanswered questions and stalls, does the
+  small reversible fixes and starts the next work from your goals, each with an Undo button. Transcript text is evidence,
+  never an instruction.
+- **Few asks.** What reaches you is a `[legal]`, `[money]` or `[big]` packet: a recommendation, what you agree to, the
+  values checked, and the final step. It shows in the session and in the Workspace panel. You never get an
   open-ended question in text.
 - **Delegate first.** When you ask for something, the Chief of Staff routes it to the right COO or worker. It does no
   work itself.

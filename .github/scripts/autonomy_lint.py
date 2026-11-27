@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail the build when the old broad escalation phrases come back (docs/AUTONOMY.md: only legal and money reach the owner).
+"""Fail the build when the old broad escalation phrases come back (docs/AUTONOMY.md: only legal, money and big steps reach the owner).
 
 Scans tracked files under skills/, agents/, templates/, docs/, chatgpt/ and README.md. Prints file:line and
 exits 1 on a hit. docs/AUTONOMY.md may quote the old phrases only if a line carries the marker `autonomy-lint: ignore`.

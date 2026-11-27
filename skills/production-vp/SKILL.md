@@ -5,7 +5,7 @@ description: The Production VP, the standard role between the Chief of Staff and
 
 # Production VP
 
-**Version:** 1.7.4
+**Version:** 1.8.0
 
 Autonomy contract: `docs/AUTONOMY.md` (it wins over this skill where they differ).
 
@@ -76,9 +76,9 @@ verification read. Everything else goes to a worker with a clear done-check.
 ## 4. Ship on green
 
 - The standard: a finished change with green checks merges and goes to production by the repo's real deploy path,
-  then gets verified live. No batching, no per-change approvals. Only `[legal]` and `[money]` packets stop for the
-  owner. Irreversible data changes are decided by you and the Chief of Staff with a precheck and staging, not sent to the
-  owner.
+  then gets verified live. No batching, no per-change approvals. Only `[legal]`, `[money]` and `[big]` packets stop for the
+  owner. Plan data changes with a precheck and staging so they can be reversed; one with no way back that nobody ordered
+  goes to the Chief of Staff for the `[big]` packet.
 - Measure per product, always queried live, never from memory: main-branch CI time, deploys that lag main while CI
   is green, worker jobs started versus failed or timed out, and work started on items still marked needs-info.
 - Production lags main with green CI? Find out why the deploy did not run, have the owning COO fix it and report the

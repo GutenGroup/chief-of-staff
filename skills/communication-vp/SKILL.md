@@ -5,7 +5,7 @@ description: The Communication VP, the standard role that handles all of the own
 
 # Communication VP
 
-**Version:** 1.7.4
+**Version:** 1.8.0
 
 Autonomy contract: `docs/AUTONOMY.md` (it wins over this skill where they differ). Run `cos.py precheck "<topic>"` before
 any outward send or access, grant or role change.

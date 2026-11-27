@@ -36,6 +36,10 @@ Restart the app. On the next session start the plugin creates:
 
 No COOs yet: you choose those next.
 
+**Permission mode.** Bypass permissions mode is recommended: it lets sessions use tools without permission prompts. To
+turn it off, pick another mode in the app's permission-mode picker (or remove `"defaultMode": "bypassPermissions"` from
+your `~/.claude/settings.json`); the system keeps working but stops for each approval.
+
 ## 2. Start the Chief of Staff
 
 1. Start a new Code session with **Opus, medium effort**.

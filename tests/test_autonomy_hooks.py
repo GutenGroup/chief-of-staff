@@ -67,7 +67,7 @@ class HookTest(unittest.TestCase):
         out = self.ask([{"question": "Which login should I use?", "options": []}])
         self.assertEqual(self.decision(out), "deny")
         self.assertTrue(out["hookSpecificOutput"]["permissionDecisionReason"].startswith(
-            "Autonomy contract (docs/AUTONOMY.md): only legal and money reach the owner."))
+            "Autonomy contract (docs/AUTONOMY.md): only legal, money and big or irreversible steps reach the owner."))
         self.assertEqual(out["hookSpecificOutput"]["hookEventName"], "PreToolUse")
         row = self.ledger()[-1]
         self.assertEqual((row["hook"], row["type"], row["decision"]), ("ask-gate", "ask", "deny"))
@@ -89,6 +89,24 @@ class HookTest(unittest.TestCase):
         reason = out["hookSpecificOutput"]["permissionDecisionReason"]
         self.assertTrue(reason.startswith("Owner-ready packet required: Recommend,"))
         self.assertNotIn("Run cos precheck first", reason)
+
+    def test_one_big_packet_needs_undo_not_a_link(self):
+        self.precheck()
+        big = "[big] Delete the old repository? Recommend: hold. Verify: Held actions 1. Undo: none, cannot be undone."
+        self.assertIsNone(self.ask([{"question": big, "options": []}]))
+        out = self.ask([{"question": big.replace("Undo:", "Note:"), "options": []}])
+        self.assertEqual(self.decision(out), "deny")
+        self.assertTrue(out["hookSpecificOutput"]["permissionDecisionReason"].startswith("One [big] packet required"))
+
+    def test_big_actions_go_up_as_one_question(self):
+        self.precheck()
+        big = "[big] Do it? Recommend: hold. Verify: 1. Undo: none."
+        self.assertEqual(self.decision(self.ask([{"question": big, "options": []}] * 2)), "deny")
+
+    def test_big_tag_does_not_waive_the_legal_link(self):
+        self.precheck()
+        q = "[legal] [big] Sign it? Recommend: sign. Verify: names. Undo: none."
+        self.assertEqual(self.decision(self.ask([{"question": q, "options": []}])), "deny")
 
     def test_missing_precheck_denied_with_hint(self):
         out = self.ask([{"question": FULL, "options": []}])

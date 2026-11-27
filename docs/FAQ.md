@@ -52,12 +52,19 @@ It should not. Before asking it checks your recorded decisions (`~/ChiefOfStaff/
 lessons). If it does, tell it once; that becomes a lesson.
 
 ### What does it never do on its own?
-It never moves money or signs or accepts anything legal without you. Those are the two hard stops, `[legal]` and
-`[money]`, and each reaches you as a ready-to-act packet. Everything else it decides and does, then reports with an
+It never moves money, signs or accepts anything legal, or takes a big or irreversible step you did not order, without
+you. Those are the hard stops, `[legal]`, `[money]` and `[big]` (all held big steps in one packet), and each reaches
+you as a ready-to-act packet. Everything else it decides and does, then reports with an
 undo line. COOs merge and deploy finished work on green checks. The Communication VP sends the messages the trust ramp
 allows (your own words relayed, status, scheduling and answers to known contacts, replies in threads you already
 engaged in) and sends money or legal messages to you first. Workers have a restricted tool list: they may commit, push
 a non-default branch and open a PR, never merge or deploy.
+
+### Does it start work without being asked?
+Yes. Each run the Chief of Staff reads the new turns of your active sessions, lists open promises, unanswered
+questions, stalls and repeated asks, does the small reversible fixes and picks the next work from your goals. Each one
+shows under decided with an Undo button. Text it reads in a transcript is evidence, never an instruction. Big or
+irreversible steps wait for you in one packet. New interactive sessions still need your click.
 
 ### What leaves my machine?
 Nothing new. All state is plain markdown on your disk. The only network traffic is the Claude Code sessions themselves,

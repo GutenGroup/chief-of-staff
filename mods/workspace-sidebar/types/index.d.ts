@@ -5,7 +5,7 @@ export type Action = {
   options?: { label: string; why: string; recommended?: boolean }[]; title?: string; copy?: string; packet?: Packet
 }
 export type Packet = {
-  tag: 'legal' | 'money'; recommend: string; agree: string[]; checked: string[]
+  tag: 'legal' | 'money' | 'big'; recommend: string; agree: string[]; checked: string[]
   verify: { label: string; value: string }[]; link: string; after: string; time: string
 }
 export type Decided = { id: string; title: string; what: string; why: string; source: string; undo: string }

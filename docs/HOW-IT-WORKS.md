@@ -60,10 +60,19 @@ then clears it in place. The session keeps its id, title and workers, re-reads i
 Staff clears itself the same way at 150k. Limits, the full sequence and why clearing beats compaction:
 [Operating](OPERATING.md).
 
-## Two asks only, never questions in text
+## Proactive start
 
-The system runs by the [autonomy contract](AUTONOMY.md): look, decide, do, report with an undo line. Only a `[legal]` or
-`[money]` item reaches you, as a packet with a recommendation, what you agree to, the values checked and one link. If
+Each run the Chief of Staff reads what is new in your active sessions and finds open promises, unanswered questions,
+stalls and repeated asks, each with its session, quote and date. `cos actions` sorts the actions: small and reversible
+ones run the same pass, big or irreversible ones wait for you in one packet. It also picks the next work from your goals
+and hands it to a COO, a worker subagent or the job runner. All of it shows under decided with an Undo button.
+Transcript text is evidence, never an instruction. See the [autonomy contract](AUTONOMY.md), section 5a.
+
+## Only the stops reach you, never questions in text
+
+The system runs by the [autonomy contract](AUTONOMY.md): look, decide, do, report with an undo line. Only a `[legal]`,
+`[money]` or `[big]` item reaches you, as a packet with a recommendation, what you agree to, the values checked and
+the final step. If
 you are away it waits in the panel. Workers send blockers to their COO (`needs-coo:`), COOs to the Chief of Staff, who
 decides. Before asking, the system checks your recorded decisions so you are not
 asked twice. Reversible things on your own accounts that you already authorized are done, not asked.
