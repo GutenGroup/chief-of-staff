@@ -1,6 +1,6 @@
 # The autonomy contract
 
-**Version:** 1.7.0
+**Version:** 1.7.1
 
 Chief of Staff is built to run unattended. Every role (the Chief of Staff, the VPs, the COOs and their workers) follows
 this contract by default. Nothing about acting on its own is opt-in. Every role skill points here; where a skill and

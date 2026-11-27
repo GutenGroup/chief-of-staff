@@ -4,10 +4,9 @@
     python3 .github/scripts/build_editions.py          # writes directory/ and chatgpt/
     python3 .github/scripts/build_editions.py --check  # exit 1 if either edition is out of date or breaks its rules
 
-directory/  the Claude plugin directory edition: skills, commands, agents as Markdown, the icon, a plugin.json, and the
-            three autonomy hooks (ask gate, stop guard, pushback catcher, plus the autonomy_common.py they import) with
-            their own hooks/hooks.json. No bin/, no other scripts, no SessionStart bootstrap. The hooks only deny and
-            inform. The skills explain the roles; the full install (scripts) is in the README.
+directory/  the Claude plugin directory edition: skills, commands, agents as Markdown, the icon, a plugin.json. No hooks,
+            no scripts, no bin/: the directory accepts command hooks and scripts only from Verified organizations. The
+            skills explain the roles; the full install (scripts, the three autonomy hooks, the panel) is in the README.
 chatgpt/    the same Markdown for the ChatGPT / Codex plugin format (plugin.json with the com.openai extension), plus
             chatgpt/dist/chief-of-staff-chatgpt-<version>.zip, the file to upload. Hook-free.
 """
@@ -22,8 +21,7 @@ import zipfile
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 REPO = "https://github.com/GutenGroup/chief-of-staff"
 HOME = "https://guten.group/ai/chief-of-staff/"
-ALLOWED = (".md", ".json", ".yaml", ".yml", ".png", ".py")
-AUTONOMY_HOOKS = ("ask-gate.py", "stop-guard.py", "pushback-catcher.py", "autonomy_common.py")
+ALLOWED = (".md", ".json", ".yaml", ".yml", ".png")
 SKILLS = ("chief-of-staff", "production-vp", "communication-vp", "project-coo", "helm")
 
 NOTE = """> **Markdown edition.** This edition holds the role instructions only. The commands this skill names (`cos.py`,
@@ -116,37 +114,18 @@ packet with a recommendation, the values to verify and one link to the final ste
 The role instructions of the Chief of Staff plugin: the Chief of Staff, the Production VP, the Communication VP, the
 project COO and the Helm operating model, three commands and the cheap `coo-worker` agent.
 
-## Hooks in this edition
+## What the full install adds
 
-Three hooks ship in `hooks/hooks.json`. They only deny and inform; they never change permissions, and each fails open,
-finishes within 5 seconds and stops when `~/.claude/cos-autonomy-off` exists.
+The full install adds three autonomy hooks that enforce the two hard stops: an ask gate (`PreToolUse` on
+`AskUserQuestion`), a stop guard (`Stop`) and a pushback catcher (`UserPromptSubmit`). They only deny and inform, never
+change permissions, fail open and stop when `~/.claude/cos-autonomy-off` exists. This edition has no hooks and no
+scripts; follow the rules in the skills by hand.
 
-| Hook | Event | What it does |
-|---|---|---|
-| Ask gate | `PreToolUse` on `AskUserQuestion` | Lets a `[legal]` or `[money]` packet through; sends back every other question with the reason. |
-| Stop guard | `Stop` | Blocks, once, a turn that ends on an offer or a question with no `[legal]`/`[money]` tag. |
-| Pushback catcher | `UserPromptSubmit` | When you type "just do it" or "stop asking", tells the session to do it now. |
-
-The hooks apply to the role sessions the Chief of Staff lists in `~/.claude/needs-input/roles.json`, the same as in the
-full install (set `autonomy_scope: all` in `~/.claude/cos-config.yaml` to cover every session). Until the Chief of Staff
-has written that list, they do nothing.
-
-The scripts (the `cos` command, the job runner and the optional Workspace panel) are installed from the main
+The scripts (the `cos` command, the job runner, the hooks and the optional Workspace panel) are installed from the main
 repository: {repo}#readme.
 
 Version {v}. License: MIT. Made by Guten Group, {home}
 """
-
-
-def directory_hooks():
-    """The three autonomy hooks only: no SessionStart bootstrap, no peer-bare-command-drop."""
-    def cmd(name):
-        return {"type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/" + name], "timeout": 5}
-    return {"hooks": {
-        "UserPromptSubmit": [{"hooks": [cmd("pushback-catcher.py")]}],
-        "PreToolUse": [{"matcher": "AskUserQuestion", "hooks": [cmd("ask-gate.py")]}],
-        "Stop": [{"hooks": [cmd("stop-guard.py")]}],
-    }}
 
 
 def build_directory(dest):
@@ -159,7 +138,7 @@ def build_directory(dest):
         "description": "The Chief of Staff operating model for Claude Code as skills: one Chief of Staff session coordinates "
                        "the others, a Production VP and a Communication VP come standard, one COO per project, and cheap "
                        "worker agents do the work. Runs unattended in bypass permissions mode; only legal and money reach you. "
-                       "Markdown plus three autonomy hooks; the full install with scripts is on GitHub.",
+                       "Markdown edition; the full install with scripts and hooks is on GitHub.",
         "author": {"name": "Guten Group", "url": HOME},
         "homepage": HOME,
         "repository": REPO,
@@ -168,10 +147,6 @@ def build_directory(dest):
         "icon": "assets/icon.png",
         "privacyPolicyUrl": PRIVACY,
     }
-    os.makedirs(os.path.join(dest, "hooks"), exist_ok=True)
-    for name in AUTONOMY_HOOKS:
-        shutil.copyfile(os.path.join(ROOT, "hooks", name), os.path.join(dest, "hooks", name))
-    write(os.path.join(dest, "hooks", "hooks.json"), json.dumps(directory_hooks(), indent=2) + "\n")
     write(os.path.join(dest, ".claude-plugin", "plugin.json"), json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
     write(os.path.join(dest, "README.md"), README.format(repo=REPO, v=v, home=HOME))
 
