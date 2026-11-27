@@ -1,21 +1,19 @@
 {
   "name": "chief-of-staff",
-  "version": "1.7.1",
-  "description": "The Chief of Staff operating model for Claude Code as skills: one Chief of Staff session coordinates the others, a Production VP and a Communication VP come standard, one COO per project, and cheap worker agents do the work. Runs unattended in bypass permissions mode; only legal and money reach you. Markdown edition; the full install with scripts and hooks is on GitHub.",
+  "version": "1.7.2",
+  "description": "Supervised edition: reads your own Claude Code sessions and project notes, writes a short brief and proposes next steps. It asks for your explicit yes before any push, merge, publish, delete, send, pay or access change. Markdown only; it sends nothing to any service.",
   "author": {
     "name": "Guten Group",
     "url": "https://guten.group/ai/chief-of-staff/"
   },
   "homepage": "https://guten.group/ai/chief-of-staff/",
-  "repository": "https://github.com/GutenGroup/chief-of-staff",
   "license": "MIT",
   "keywords": [
     "chief-of-staff",
     "coordination",
     "sessions",
-    "delegation",
-    "productivity",
-    "agents"
+    "brief",
+    "productivity"
   ],
   "icon": "assets/icon.png",
   "privacyPolicyUrl": "https://guten.group/privacy/"

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Build the Markdown-only editions from the main plugin. Run from the repo root after every version change:
+"""Build the Markdown-only editions. Run from the repo root after every version change:
 
     python3 .github/scripts/build_editions.py          # writes directory/ and chatgpt/
     python3 .github/scripts/build_editions.py --check  # exit 1 if either edition is out of date or breaks its rules
 
-directory/  the Claude plugin directory edition: skills, commands, agents as Markdown, the icon, a plugin.json. No hooks,
-            no scripts, no bin/: the directory accepts command hooks and scripts only from Verified organizations. The
-            skills explain the roles; the full install (scripts, the three autonomy hooks, the panel) is in the README.
-chatgpt/    the same Markdown for the ChatGPT / Codex plugin format (plugin.json with the com.openai extension), plus
+directory/  the Claude plugin directory edition (supervised): its own texts from editions/directory/, the icon and a
+            plugin.json. Markdown only; every outward or destructive step needs the user's yes. The rules it must keep
+            are enforced by directory_lint.py.
+chatgpt/    the Markdown for the ChatGPT / Codex plugin format (plugin.json with the com.openai extension), plus
             chatgpt/dist/chief-of-staff-chatgpt-<version>.zip, the file to upload. Hook-free.
 """
 import json
@@ -18,18 +18,14 @@ import sys
 import tempfile
 import zipfile
 
+sys.dont_write_bytecode = True
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import directory_lint  # noqa: E402
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 REPO = "https://github.com/GutenGroup/chief-of-staff"
 HOME = "https://guten.group/ai/chief-of-staff/"
 ALLOWED = (".md", ".json", ".yaml", ".yml", ".png")
-SKILLS = ("chief-of-staff", "production-vp", "communication-vp", "project-coo", "helm")
-
-NOTE = """> **Markdown edition.** This edition holds the role instructions only. The commands this skill names (`cos.py`,
-> `cos`, the job runner and the Workspace panel) come with the full install: see the
-> [README]({repo}#readme) and [Getting started]({repo}/blob/main/docs/GETTING-STARTED.md). Without them, follow the
-> rules here by hand and keep the files they name yourself.
-""".format(repo=REPO)
-
 
 def version():
     return open(os.path.join(ROOT, "VERSION")).read().strip()
@@ -58,97 +54,41 @@ def quoted_front(fields):
     return "\n".join(lines + ["---", ""])
 
 
-def add_note(body):
-    """Put the edition note right after the first heading line (and its Version line)."""
-    lines = body.split("\n")
-    i = next((n for n, l in enumerate(lines) if l.startswith("# ")), -1)
-    j = i + 1
-    while j < len(lines) and (not lines[j].strip() or lines[j].startswith("**Version:**")):
-        j += 1
-    return "\n".join(lines[:j] + [NOTE] + lines[j:])
-
-
 def write(path, text):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(text)
 
 
-COS_HELP = """Answer the user's question about the Chief of Staff system: "$ARGUMENTS".
-
-Answer from the `chief-of-staff`, `project-coo`, `production-vp`, `communication-vp` and `helm` skills in this plugin,
-and from the documentation at {repo}/tree/main/docs (start with FAQ.md). Quote the file you used. If the answer is not
-there, say so and point to {repo}/issues. Never guess.
-""".format(repo=REPO)
-
-
-def markdown_tree(dest):
-    """skills/, commands/, agents/ as Markdown with quoted frontmatter and the edition note."""
-    for s in SKILLS:
-        fields, body = split_front(open(os.path.join(ROOT, "skills", s, "SKILL.md"), encoding="utf-8").read())
-        write(os.path.join(dest, "skills", s, "SKILL.md"), quoted_front(fields) + add_note(body))
-    for name in sorted(os.listdir(os.path.join(ROOT, "commands"))):
-        fields, body = split_front(open(os.path.join(ROOT, "commands", name), encoding="utf-8").read())
-        if name == "cos-help.md":
-            body = COS_HELP
-        else:
-            body = body.replace("Read `~/.claude/chief-of-staff/docs/SETTING-UP-COOS.md` first.",
-                                "Read %s/blob/main/docs/SETTING-UP-COOS.md first." % REPO)
-            body = body.rstrip("\n") + "\n\nThe full install (scripts, hooks, panel) is in %s#readme.\n" % REPO
-        write(os.path.join(dest, "commands", name), quoted_front(fields) + body)
-    for name in sorted(os.listdir(os.path.join(ROOT, "agents"))):
-        fields, body = split_front(open(os.path.join(ROOT, "agents", name), encoding="utf-8").read())
-        write(os.path.join(dest, "agents", name), quoted_front(fields) + body)
-    os.makedirs(os.path.join(dest, "assets"), exist_ok=True)
-    shutil.copyfile(os.path.join(ROOT, "assets", "icon.png"), os.path.join(dest, "assets", "icon.png"))
-
-
-README = """# Chief of Staff (Markdown edition)
-
-**Built to run unattended in bypass permissions mode.** Sessions act without permission prompts; you turn that mode on
-yourself (the app's permission-mode picker, or `"permissions": {{"defaultMode": "bypassPermissions"}}` in your own
-`~/.claude/settings.json`). This plugin never changes your permission mode. Two hard stops always reach you, in any mode:
-`[legal]` (signing, accepting terms, attesting) and `[money]` (paying, buying, moving money). Each arrives as a ready
-packet with a recommendation, the values to verify and one link to the final step.
-
-The role instructions of the Chief of Staff plugin: the Chief of Staff, the Production VP, the Communication VP, the
-project COO and the Helm operating model, three commands and the cheap `coo-worker` agent.
-
-## What the full install adds
-
-The full install adds three autonomy hooks that enforce the two hard stops: an ask gate (`PreToolUse` on
-`AskUserQuestion`), a stop guard (`Stop`) and a pushback catcher (`UserPromptSubmit`). They only deny and inform, never
-change permissions, fail open and stop when `~/.claude/cos-autonomy-off` exists. This edition has no hooks and no
-scripts; follow the rules in the skills by hand.
-
-The scripts (the `cos` command, the job runner, the hooks and the optional Workspace panel) are installed from the main
-repository: {repo}#readme.
-
-Version {v}. License: MIT. Made by Guten Group, {home}
-"""
-
-
 def build_directory(dest):
+    """Copy editions/directory/ (its own texts, nothing filtered from the full plugin) and add the manifest and icon."""
     v = version()
     main = json.load(open(os.path.join(ROOT, ".claude-plugin", "plugin.json")))
-    markdown_tree(dest)
+    src = os.path.join(ROOT, "editions", "directory")
+    for base, dirs, files in os.walk(src):
+        dirs.sort()
+        for f in sorted(files):
+            full = os.path.join(base, f)
+            if f.startswith("."):
+                continue
+            text = open(full, encoding="utf-8").read().replace("{{version}}", v)
+            write(os.path.join(dest, os.path.relpath(full, src)), text)
+    os.makedirs(os.path.join(dest, "assets"), exist_ok=True)
+    shutil.copyfile(os.path.join(ROOT, "assets", "icon.png"), os.path.join(dest, "assets", "icon.png"))
     manifest = {
         "name": "chief-of-staff",
         "version": v,
-        "description": "The Chief of Staff operating model for Claude Code as skills: one Chief of Staff session coordinates "
-                       "the others, a Production VP and a Communication VP come standard, one COO per project, and cheap "
-                       "worker agents do the work. Runs unattended in bypass permissions mode; only legal and money reach you. "
-                       "Markdown edition; the full install with scripts and hooks is on GitHub.",
+        "description": "Supervised edition: reads your own Claude Code sessions and project notes, writes a short brief "
+                       "and proposes next steps. It asks for your explicit yes before any push, merge, publish, delete, "
+                       "send, pay or access change. Markdown only; it sends nothing to any service.",
         "author": {"name": "Guten Group", "url": HOME},
         "homepage": HOME,
-        "repository": REPO,
         "license": main.get("license", "MIT"),
-        "keywords": main.get("keywords", []),
+        "keywords": ["chief-of-staff", "coordination", "sessions", "brief", "productivity"],
         "icon": "assets/icon.png",
         "privacyPolicyUrl": PRIVACY,
     }
     write(os.path.join(dest, ".claude-plugin", "plugin.json"), json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
-    write(os.path.join(dest, "README.md"), README.format(repo=REPO, v=v, home=HOME))
 
 
 MCP_URL = "https://guten.group/api/cos-mcp/"
@@ -413,6 +353,8 @@ def main():
                     shutil.rmtree(p) if os.path.isdir(p) else os.remove(p)
             fn(live)
         bad += problems(live)
+        if name == "directory":
+            bad += directory_lint.problems(live)
     for b in bad:
         print(b)
     sys.exit(1 if bad else 0)

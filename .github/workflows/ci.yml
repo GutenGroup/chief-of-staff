@@ -29,6 +29,8 @@ jobs:
           python3 bin/cos.py autonomy-drill --dry-run
       - name: Editions up to date (directory/, chatgpt/)
         run: python3 .github/scripts/build_editions.py --check
+      - name: Directory edition policy phrases
+        run: python3 .github/scripts/directory_lint.py
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -36,6 +38,7 @@ jobs:
         run: |
           npm install --global @anthropic-ai/claude-code
           claude plugin validate . --profile directory
+          claude plugin validate ./directory --profile directory
       - name: Tests
         run: |
           python3 -m unittest discover -s tests

@@ -13,6 +13,12 @@ what we merge.
 4. A Guten Group member reviews it. A pull request from outside the organization needs an approving review from a
    member before it can merge; nobody outside the organization can push to `main`.
 
+## The directory edition
+
+`editions/directory/` holds the texts of the supervised edition published in the Claude plugin directory; `directory/` is
+built from it. It is written on its own, not filtered from the full skills, and `.github/scripts/directory_lint.py`
+fails the build on anything the directory policy refuses. Change both editions when a role's behavior changes.
+
 ## Checks
 
 Every pull request runs the same checks as a release: a private-data check, `claude plugin validate --profile
