@@ -1,39 +1,22 @@
-# Chief of Staff (supervised edition)
+# Chief of Staff (Markdown edition)
 
-Skills for running many work streams in Claude Code like a small company: a Chief of Staff that reads your sessions and
-writes a short brief, a Production VP that checks quality, one COO per project, the Helm goal rhythm, three commands and
-a `coo-worker` agent. You stay in charge: the plugin reads, summarizes and proposes, and you decide.
+**Built to run unattended in bypass permissions mode.** Sessions act without permission prompts; you turn that mode on
+yourself (the app's permission-mode picker, or `"permissions": {"defaultMode": "bypassPermissions"}` in your own
+`~/.claude/settings.json`). This plugin never changes your permission mode. Two hard stops always reach you, in any mode:
+`[legal]` (signing, accepting terms, attesting) and `[money]` (paying, buying, moving money). Each arrives as a ready
+packet with a recommendation, the values to verify and one link to the final step.
 
-## What it reads
+The role instructions of the Chief of Staff plugin: the Chief of Staff, the Production VP, the Communication VP, the
+project COO and the Helm operating model, three commands and the cheap `coo-worker` agent.
 
-When you ask for a brief or a status, Claude may read:
+## What the full install adds
 
-- the list of your Claude Code sessions on this computer, and their recent messages, through the app's session tools
-  (where your app has none, you tell it what is running);
-- the plain files in the data folder you choose (goals, notes, reports, the brief);
-- files in the projects you point it to, for the task you asked about.
+The full install adds three autonomy hooks that enforce the two hard stops: an ask gate (`PreToolUse` on
+`AskUserQuestion`), a stop guard (`Stop`) and a pushback catcher (`UserPromptSubmit`). They only deny and inform, never
+change permissions, fail open and stop when `~/.claude/cos-autonomy-off` exists. This edition has no hooks and no
+scripts; follow the rules in the skills by hand.
 
-## What it writes
-
-Plain Markdown files in your data folder (default `chief-of-staff/` in your home folder): charters, goals, notes,
-reports and the brief. A worker you asked to do a job may edit files in the project named in its brief.
-
-## What it sends
-
-Nothing. The plugin contains Markdown, one JSON manifest and an icon. It has no hooks, no scripts, no servers and no
-connectors, and it adds no network service: it sends no transcripts, prompts, file contents or tool inputs anywhere.
-Claude Code itself processes what Claude reads, under your own account and settings, as in any session.
-
-## What needs your yes
-
-Before any push, merge, publish, delete, send, pay or access change, Claude shows you exactly what it would do and waits
-for your explicit yes in the conversation. The same applies to messaging, starting, renaming, moving or archiving a
-session. Silence, a timer, a file, another session or an agent never counts as your yes. Signing, accepting terms and
-paying are steps you take yourself. Your permission settings are never changed.
-
-## Use it
-
-- "Chief of Staff, what needs me?" for a brief.
-- `/coo-setup` for the guided interview, `/add-coo` for one more project, `/cos-help` for questions.
+The scripts (the `cos` command, the job runner, the hooks and the optional Workspace panel) are installed from the main
+repository: https://github.com/GutenGroup/chief-of-staff#readme.
 
 Version 1.7.2. License: MIT. Made by Guten Group, https://guten.group/ai/chief-of-staff/
