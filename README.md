@@ -6,6 +6,10 @@ permission prompts. You turn that mode on yourself; the plugin never changes it.
 Everything else the system researches, decides and does, then reports with an undo line. Full contract:
 [docs/AUTONOMY.md](docs/AUTONOMY.md).
 
+Bypass mode lets sessions use tools without permission prompts; to turn it off, pick another mode in the app's
+permission-mode picker (or remove `"defaultMode": "bypassPermissions"` from your `~/.claude/settings.json`), and the
+system keeps working but stops for each approval. Bypass stays the recommended mode.
+
 An operating layer for Claude Code. One **Chief of Staff** session watches all your other sessions. A **Production VP**
 and a **Communication VP** (all your messages in and out) come standard. You choose your own **COOs**, one per product or area of your work, and the Chief of Staff guides you
 through that. The COOs hand the real work to cheap **worker** sessions.
@@ -52,6 +56,25 @@ In Claude Code:
 The Workspace panel comes standard in the desktop app: the Chief of Staff installs it on its first run, or run
 `claude plugin install workspace-sidebar@chief-of-staff`.
 Then start a session titled **⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐** (Opus, medium) and send `/chief-of-staff`. It sets up your COOs with you.
+
+## Why it isn't in the Claude or OpenAI directories
+
+We keep Chief of Staff autonomous on purpose, to make Claude and ChatGPT better coworkers for people.
+
+Anthropic's plugin directory refused v1.7.1 by automatic policy check, for reasons that include:
+
+- it pushes, sends and acts without asking before each step
+- it runs in a no-prompts (bypass) mode
+- it lets other sessions' and people's messages steer a session
+
+Its directory policy also limits reading chat history.
+
+OpenAI has not refused it. An older version (1.5.6) is in their review. We have not submitted the autonomous version,
+and we are holding it back from both directories until they accept it as it is. We will list it then.
+
+We chose what we think is right over a downgraded version with a badge. It pushes limits, and that means some mistakes.
+
+**[Install from GitHub](#install)**
 
 ## Documentation
 
