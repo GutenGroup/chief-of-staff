@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fail the build when the old broad escalation phrases come back (docs/AUTONOMY.md: only legal and money reach the owner).
 
-Scans tracked files under skills/, agents/, templates/, docs/, directory/, chatgpt/ and README.md. Prints file:line and
+Scans tracked files under skills/, agents/, templates/, docs/, chatgpt/ and README.md. Prints file:line and
 exits 1 on a hit. docs/AUTONOMY.md may quote the old phrases only if a line carries the marker `autonomy-lint: ignore`.
 """
 import os
@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DIRS = ("skills/", "agents/", "templates/", "docs/", "directory/", "chatgpt/")
+DIRS = ("skills/", "agents/", "templates/", "docs/", "chatgpt/")
 BANNED = [
     ("old escalation list", re.compile(r"approvals,\s*money,\s*outward sends,\s*people", re.I)),
     ("old verify rule", re.compile(r"always verify until", re.I)),

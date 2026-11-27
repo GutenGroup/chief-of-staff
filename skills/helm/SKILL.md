@@ -5,7 +5,7 @@ description: Helm is the operating model behind the Chief of Staff: the owner se
 
 # Helm
 
-**Version:** 1.7.2
+**Version:** 1.7.3
 
 Autonomy contract: `docs/AUTONOMY.md` (it wins over this skill where they differ).
 
