@@ -27,7 +27,7 @@ jobs:
         run: |
           python3 .github/scripts/autonomy_lint.py
           python3 bin/cos.py autonomy-drill --dry-run
-      - name: Editions up to date (directory/, chatgpt/)
+      - name: Editions up to date (chatgpt/)
         run: python3 .github/scripts/build_editions.py --check
       - uses: actions/setup-node@v4
         with:

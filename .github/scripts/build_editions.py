@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 """Build the Markdown-only editions from the main plugin. Run from the repo root after every version change:
 
-    python3 .github/scripts/build_editions.py          # writes directory/ and chatgpt/
+    python3 .github/scripts/build_editions.py          # writes chatgpt/
     python3 .github/scripts/build_editions.py --check  # exit 1 if either edition is out of date or breaks its rules
 
-directory/  the Claude plugin directory edition: skills, commands, agents as Markdown, the icon, a plugin.json. No hooks,
-            no scripts, no bin/: the directory accepts command hooks and scripts only from Verified organizations. The
-            skills explain the roles; the full install (scripts, the three autonomy hooks, the panel) is in the README.
 chatgpt/    the same Markdown for the ChatGPT / Codex plugin format (plugin.json with the com.openai extension), plus
             chatgpt/dist/chief-of-staff-chatgpt-<version>.zip, the file to upload. Hook-free.
 """
@@ -126,29 +123,6 @@ repository: {repo}#readme.
 
 Version {v}. License: MIT. Made by Guten Group, {home}
 """
-
-
-def build_directory(dest):
-    v = version()
-    main = json.load(open(os.path.join(ROOT, ".claude-plugin", "plugin.json")))
-    markdown_tree(dest)
-    manifest = {
-        "name": "chief-of-staff",
-        "version": v,
-        "description": "The Chief of Staff operating model for Claude Code as skills: one Chief of Staff session coordinates "
-                       "the others, a Production VP and a Communication VP come standard, one COO per project, and cheap "
-                       "worker agents do the work. Runs unattended in bypass permissions mode; only legal and money reach you. "
-                       "Markdown edition; the full install with scripts and hooks is on GitHub.",
-        "author": {"name": "Guten Group", "url": HOME},
-        "homepage": HOME,
-        "repository": REPO,
-        "license": main.get("license", "MIT"),
-        "keywords": main.get("keywords", []),
-        "icon": "assets/icon.png",
-        "privacyPolicyUrl": PRIVACY,
-    }
-    write(os.path.join(dest, ".claude-plugin", "plugin.json"), json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
-    write(os.path.join(dest, "README.md"), README.format(repo=REPO, v=v, home=HOME))
 
 
 MCP_URL = "https://guten.group/api/cos-mcp/"
@@ -396,7 +370,7 @@ def tree_bytes(d):
 
 def main():
     check = "--check" in sys.argv
-    targets = {"directory": build_directory, "chatgpt": build_chatgpt}
+    targets = {"chatgpt": build_chatgpt}
     bad = []
     for name, fn in targets.items():
         live = os.path.join(ROOT, name)
