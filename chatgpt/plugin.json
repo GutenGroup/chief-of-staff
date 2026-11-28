@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "chief-of-staff",
-  "version": "1.7.4",
+  "version": "1.7.5",
   "description": "Run many work streams like a small company: a Chief of Staff, a Production VP, a Communication VP and one COO per project, with short briefs and decisions as clear choices.",
   "author": {
     "name": "Guten Group",
@@ -103,7 +103,7 @@
         "commerce_description": "This plugin does not sell anything or process payments."
       },
       "publication": {
-        "release_notes": "Chief of Staff 1.7.4: autonomous by default. Only legal and money steps reach you, as ready packets with a recommendation and one link; every role looks first before it acts."
+        "release_notes": "Chief of Staff 1.7.5: autonomous by default. Only legal and money steps reach you, as ready packets with a recommendation and one link; every role looks first before it acts."
       }
     }
   }
