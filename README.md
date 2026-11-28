@@ -61,6 +61,73 @@ The Workspace panel comes standard in the desktop app: the Chief of Staff instal
 `claude plugin install workspace-sidebar@chief-of-staff`.
 Then start a session titled **⭐ 𝐂𝐇𝐈𝐄𝐅 𝐎𝐅 𝐒𝐓𝐀𝐅𝐅 ⭐** (Opus, medium) and send `/chief-of-staff`. It sets up your COOs with you.
 
+## ChatGPT edition
+
+The ChatGPT edition is the five role instructions (Chief of Staff, Production VP, Communication VP, project COO, Helm),
+written for ChatGPT, plus three read-only tools: explain a role, show a demo brief, and point to the install. The tools
+hold no user data. It has no Claude Code scripts, hooks or Workspace panel, so nothing runs on a schedule.
+
+It is not in OpenAI's directory: version 1.5.6 is in their review, and the 1.7.x edition has not been submitted. These
+are the other routes OpenAI documents (checked 2026-11-28). Their pages and your plan decide what you see.
+
+### ChatGPT desktop app or Codex CLI (local marketplace)
+
+1. Copy the edition into your plugin folder:
+
+```
+git clone https://github.com/GutenGroup/chief-of-staff
+mkdir -p ~/.codex/plugins ~/.agents/plugins
+cp -R chief-of-staff/chatgpt ~/.codex/plugins/chief-of-staff
+```
+
+2. Save this as `~/.agents/plugins/marketplace.json`. If that file already exists, add only the entry inside `plugins`.
+
+```json
+{
+  "name": "my-plugins",
+  "plugins": [
+    {
+      "name": "chief-of-staff",
+      "source": { "source": "local", "path": "./.codex/plugins/chief-of-staff" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}
+```
+
+3. Desktop app: restart it, open the Plugins directory, choose your marketplace and install Chief of Staff.
+   Codex CLI: run the command below (if you kept an existing file, use its `name` after the `@`), then start a new session.
+
+```
+codex plugin add chief-of-staff@my-plugins
+```
+
+Do not run `codex plugin marketplace add GutenGroup/chief-of-staff` for this: the repository's marketplace lists the
+Claude Code plugins, not the ChatGPT edition.
+
+### Workspace upload (workspace owners and admins)
+
+In ChatGPT on the web, where the option is available: Admin console, select the workspace, **Plugins**, **Add**,
+**Upload plugin**, and choose the ZIP from [chatgpt/dist](chatgpt/dist). You need upload permission; on Enterprise it is
+off by default.
+
+### Only the three tools (custom MCP server, ChatGPT on the web)
+
+**Plugins**, plus button, **Add custom MCP server**. Enter a name and the URL below, set authentication to match a server
+with no sign-in, accept the risk warning, then **Create as a plugin**. OpenAI's help article describes this for Business,
+Enterprise and Edu, and for Pro with read/fetch permissions; it does not mention Free or Plus. This adds no role
+instructions.
+
+```
+https://guten.group/api/cos-mcp/
+```
+
+Sources: [Package your plugin](https://developers.openai.com/plugins/build/plugins),
+[Plugins](https://learn.chatgpt.com/docs/plugins),
+[Plugins in ChatGPT](https://help.openai.com/en/articles/20001256-plugins-in-chatgpt),
+[Custom MCP servers](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt).
+
 ## Why it isn't in the Claude or OpenAI directories
 
 We keep Chief of Staff autonomous on purpose, to make Claude and ChatGPT better coworkers for people.
@@ -78,7 +145,7 @@ and we are holding it back from both directories until they accept it as it is. 
 
 We chose what we think is right over a downgraded version with a badge. It pushes limits, and that means some mistakes.
 
-**[Install from GitHub](#install)**
+**[Install from GitHub](#install)** · **[ChatGPT edition](#chatgpt-edition)**
 
 ## Documentation
 
