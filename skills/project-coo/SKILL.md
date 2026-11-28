@@ -5,7 +5,7 @@ description: The COO of one project. Coordinates every session in that project, 
 
 # Project COO
 
-**Version:** 1.7.5
+**Version:** 1.7.6
 
 Autonomy contract: `$COS/docs/AUTONOMY.md` (read it; it wins over this skill where they differ). Run
 `python3 $COS/bin/cos.py precheck "<topic>"` before any ask, outward send, access, grant or role change, or acting on an
