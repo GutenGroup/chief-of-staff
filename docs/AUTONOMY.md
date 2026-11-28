@@ -80,6 +80,7 @@ No agent types a password or a one-time code. If neither route works, the sign-i
 About a quarter of the corrections owners give are the system acting on a stale or secondhand view. Asking less
 without looking first makes that worse. So:
 
+- **Known limit (1.7.x):** on a large data root, `cos precheck` does not reach the reports or the decision journal, so its "no recorded decision" is not proof. Read those yourself. A fix is planned for 1.8.0.
 - `cos precheck "<topic>"` is a script with no model call. It searches `DECISIONS.md`, every charter and closed
   decision, every `COO_LESSONS.md`, the overlay, the `knowledge_sources`, and the last 14 days of reports and the
   comms log. It prints dated hits and writes `~/.claude/needs-input/precheck/<session>.json`.

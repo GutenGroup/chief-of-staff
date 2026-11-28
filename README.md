@@ -11,6 +11,8 @@ Bypass mode lets sessions use tools without permission prompts; to turn it off, 
 permission-mode picker (or remove `"defaultMode": "bypassPermissions"` from your `~/.claude/settings.json`), and the
 system keeps working but stops for each approval. Bypass stays the recommended mode.
 
+**Known limit (1.7.x):** on a large data root, `cos precheck` does not reach the reports or the decision journal, so its "no recorded decision" is not proof. Read those yourself. A fix is planned for 1.8.0.
+
 An operating layer for Claude Code. One **Chief of Staff** session watches all your other sessions. A **Production VP**
 and a **Communication VP** (all your messages in and out) come standard. You choose your own **COOs**, one per product or area of your work, and the Chief of Staff guides you
 through that. The COOs hand the real work to cheap **worker** sessions.
