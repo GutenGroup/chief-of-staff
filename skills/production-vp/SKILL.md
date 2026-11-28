@@ -5,7 +5,7 @@ description: The Production VP, the standard role between the Chief of Staff and
 
 # Production VP
 
-**Version:** 1.7.4
+**Version:** 1.7.5
 
 Autonomy contract: `docs/AUTONOMY.md` (it wins over this skill where they differ).
 
